@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Panel Admin — ALTOMUS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{-ms-overflow-style:none;scrollbar-width:none}*::-webkit-scrollbar{display:none}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;color:#1e293b;-webkit-tap-highlight-color:transparent}
+  html,body{overscroll-behavior-y:contain}
+  .btn-p{transition:all .1s;box-shadow:0 3px 0 #1e40af;position:relative;top:0}
+  .btn-p:active{top:3px;box-shadow:0 0 0 #1e40af}
+  .btn-g{transition:all .1s;box-shadow:0 3px 0 #15803d;position:relative;top:0}
+  .btn-g:active{top:3px;box-shadow:0 0 0 #15803d}
+  .btn-r{transition:all .1s;box-shadow:0 3px 0 #991b1b;position:relative;top:0}
+  .btn-r:active{top:3px;box-shadow:0 0 0 #991b1b}
+  .tab-nav{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .tab-btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:999px;font-weight:700;font-size:11px;transition:all .2s;white-space:nowrap}
+  .tab-btn.on{background:#3b82f6;color:#fff}
+  .tab-btn.off{background:#fff;color:#64748b;border:1px solid #e2e8f0}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .fadein{animation:fadein .22s ease-out forwards}
+  .modal-bg{background:rgba(0,0,0,.55)}
+  input,select,textarea{font-family:'Plus Jakarta Sans',sans-serif}
+</style>
+</head>
+<body class="pb-8">
+
+<!-- Page loader -->
+<div id="loader" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-[999]">
+  <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent mb-3"></div>
+  <p class="text-slate-400 text-sm font-semibold">Memuat panel admin…</p>
+</div>
+
+<!-- Overlay loading -->
+<div id="ov" class="fixed inset-0 bg-white/75 backdrop-blur-sm z-[150] items-center justify-center hidden"><div class="animate-spin rounded-full h-11 w-11 border-4 border-blue-600 border-t-transparent"></div></div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-2xl opacity-0 -translate-y-3 transition-all duration-300 z-[300] pointer-events-none whitespace-nowrap"></div>
+
+<!-- ══════ MODAL: Edit User ══════ -->
+<div id="modal-user" class="fixed inset-0 modal-bg z-[200] flex items-end sm:items-center justify-center hidden">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-extrabold text-slate-800">Edit Pengguna</h3>
+      <button onclick="closeModal('modal-user')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">✕</button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label">Nama</label><input id="eu-name" class="inp" placeholder="Nama lengkap"></div>
+      <div><label class="label">Nomor HP</label><input id="eu-phone" class="inp" placeholder="08xxx"></div>
+      <div><label class="label">Saldo (Rp)</label><input id="eu-balance" type="number" class="inp" placeholder="0"></div>
+      <div><label class="label">Paket Aktif Hingga</label><input id="eu-until" type="datetime-local" class="inp"></div>
+      <div><label class="label">Status</label>
+        <select id="eu-blocked" class="inp">
+          <option value="false">Aktif</option>
+          <option value="true">Diblokir</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-3 pt-1">
+      <button onclick="closeModal('modal-user')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-sm">Batal</button>
+      <button onclick="saveUser()" class="flex-1 btn-p bg-blue-600 text-white py-3 rounded-2xl font-bold text-sm">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Edit Paket ══════ -->
+<div id="modal-paket" class="fixed inset-0 modal-bg z-[200] flex items-end sm:items-center justify-center hidden">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6 space-y-4 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <h3 id="mp-title" class="text-lg font-extrabold text-slate-800">Tambah Paket</h3>
+      <button onclick="closeModal('modal-paket')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">✕</button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="label">Nama Paket</label><input id="ep-name" class="inp" placeholder="Paket Gold"></div>
+      <div><label class="label">Deskripsi</label><input id="ep-desc" class="inp" placeholder="1 Bulan Full"></div>
+      <div><label class="label">Durasi (hari)</label><input id="ep-days" type="number" class="inp" placeholder="30"></div>
+      <div><label class="label">Harga (Rp)</label><input id="ep-price" type="number" class="inp" placeholder="100000"></div>
+    </div>
+    <div class="flex gap-3 pt-1">
+      <button onclick="closeModal('modal-paket')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-sm">Batal</button>
+      <button onclick="savePaket()" class="flex-1 btn-p bg-blue-600 text-white py-3 rounded-2xl font-bold text-sm">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Detail Transaksi ══════ -->
+<div id="modal-tx" class="fixed inset-0 modal-bg z-[200] flex items-end sm:items-center justify-center hidden">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6 space-y-3 shadow-2xl max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-extrabold text-slate-800">Detail Transaksi</h3>
+      <button onclick="closeModal('modal-tx')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">✕</button>
+    </div>
+    <div id="tx-detail" class="space-y-2 text-sm"></div>
+    <div id="tx-actions" class="flex gap-3 pt-1"></div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Topup Manual ══════ -->
+<div id="modal-topup" class="fixed inset-0 modal-bg z-[200] flex items-end sm:items-center justify-center hidden">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6 space-y-4 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-extrabold text-slate-800">Topup Saldo Manual</h3>
+      <button onclick="closeModal('modal-topup')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">✕</button>
+    </div>
+    <div id="topup-user-info" class="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600"></div>
+    <div class="space-y-3">
+      <div><label class="label">Jumlah Topup (Rp)</label><input id="tu-amount" type="number" class="inp" placeholder="50000"></div>
+      <div><label class="label">Keterangan</label><input id="tu-note" class="inp" placeholder="Transfer BCA, dll"></div>
+    </div>
+    <div class="flex gap-3 pt-1">
+      <button onclick="closeModal('modal-topup')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-sm">Batal</button>
+      <button onclick="doTopup()" class="flex-1 btn-g bg-green-600 text-white py-3 rounded-2xl font-bold text-sm">Topup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Detail Topup Request ══════ -->
+<div id="modal-topup-detail" class="fixed inset-0 modal-bg z-[200] flex items-end sm:items-center justify-center hidden">
+  <div class="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6 space-y-3 shadow-2xl">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-extrabold text-slate-800">Detail Topup</h3>
+      <button onclick="closeModal('modal-topup-detail')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold">✕</button>
+    </div>
+    <div id="topup-detail" class="space-y-2 text-sm"></div>
+    <div id="topup-actions" class="flex gap-3 pt-1"></div>
+  </div>
+</div>
+
+<!-- ══════ MODAL: Konfirmasi Hapus ══════ -->
+<div id="modal-del" class="fixed inset-0 modal-bg z-[200] flex items-center justify-center p-5 hidden">
+  <div class="bg-white w-full max-w-xs rounded-[2rem] p-6 text-center space-y-4 shadow-2xl">
+    <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <div>
+      <p class="font-extrabold text-slate-800">Hapus Pengguna?</p>
+      <p id="del-name" class="text-slate-400 text-sm mt-1"></p>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeModal('modal-del')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-2xl font-bold text-sm">Batal</button>
+      <button onclick="confirmDelete()" class="flex-1 btn-r bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     HEADER
+══════════════════════════════════════ -->
+<header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-2.5">
+    <div class="w-8 h-8 bg-red-600 rounded-xl flex items-center justify-center shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div>
+      <p class="text-[8px] text-red-500 font-bold uppercase tracking-widest leading-none">Panel Admin</p>
+      <h1 class="text-sm font-extrabold text-slate-800 leading-tight">ALTOMUS</h1>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="/" class="text-[11px] text-slate-500 font-semibold flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> App
+    </a>
+    <button onclick="handleLogout()" class="text-[11px] text-red-500 font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-xl hover:bg-red-100 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg> Keluar
+    </button>
+  </div>
+</header>
+
+<!-- Stats -->
+<div id="stats-row" class="grid grid-cols-4 gap-2 px-4 mt-3"></div>
+
+<!-- Tab nav -->
+<div class="tab-nav px-4 mt-3 flex gap-2 pb-1">
+  <button class="tab-btn on"  id="t-users"  onclick="setTab('users')">👥 Pengguna</button>
+  <button class="tab-btn off" id="t-paket"  onclick="setTab('paket')">📦 Paket</button>
+  <button class="tab-btn off" id="t-tx"     onclick="setTab('tx')">💳 Transaksi</button>
+  <button class="tab-btn off" id="t-topup"  onclick="setTab('topup')">💰 Topup</button>
+  <button class="tab-btn off" id="t-ref"    onclick="setTab('ref')">🔗 Referral</button>
+  <button class="tab-btn off" id="t-kontak" onclick="setTab('kontak')">📞 Kontak</button>
+  <button class="tab-btn off" id="t-wd"     onclick="setTab('wd')">🏧 Withdraw</button>
+</div>
+
+<!-- Search bar (hidden on non-list tabs) -->
+<div id="search-wrap" class="px-4 mt-2">
+  <input id="q" type="text" placeholder="Cari…" oninput="renderTab()"
+    class="w-full p-3 bg-white rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-400 text-sm shadow-sm">
+</div>
+
+<!-- Content -->
+<div id="content" class="px-4 mt-3 space-y-3 pb-16 fadein"></div>
+
+<!-- ══════════════════════════════════════
+     STYLES (inline utility classes)
+══════════════════════════════════════ -->
+<style>
+  .label{display:block;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+  .inp{width:100%;padding:12px 14px;background:#f1f5f9;border-radius:14px;border:none;outline:none;font-size:14px;color:#1e293b;transition:.2s}
+  .inp:focus{box-shadow:0 0 0 2px #3b82f6}
+  .card{background:#fff;border-radius:20px;padding:16px;border:1px solid #f1f5f9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase}
+  .badge-green{background:#dcfce7;color:#15803d}
+  .badge-red{background:#fee2e2;color:#dc2626}
+  .badge-orange{background:#ffedd5;color:#ea580c}
+  .badge-slate{background:#f1f5f9;color:#64748b}
+  .badge-blue{background:#dbeafe;color:#2563eb}
+</style>
+
+<!-- ══════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, deleteUser as fbDeleteUser }
+  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+         addDoc, onSnapshot, collection, query, orderBy, serverTimestamp, writeBatch }
+  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const fbConfig = {
+  apiKey:"AIzaSyDQSoNBnlWKSP5Qx3A9lu5XBBJevmtGGkI",
+  authDomain:"laci-222f3.firebaseapp.com",
+  projectId:"laci-222f3",
+  storageBucket:"laci-222f3.firebasestorage.app",
+  messagingSenderId:"827067069702",
+  appId:"1:827067069702:web:5f70051cc45995c5af1a87"
+};
+const fbApp = initializeApp(fbConfig);
+const auth  = getAuth(fbApp);
+const db    = getFirestore(fbApp);
+const ADMIN_PHONE = "085813899649";
+
+// ── state ──────────────────────────────────────────────────────────────
+let activeTab   = 'users';
+let allUsers    = [];
+let allTx       = [];
+let allTopups   = [];
+let appSettings = { referralCommission:10000, packages:[], contacts:{} };
+let editingUid  = null;
+let editingPkIdx= null;
+let pendingDelUid = null;
+let topupTargetUid = null;
+let txDetailData   = null;
+let topupDetailData= null;
+
+// ── helpers ────────────────────────────────────────────────────────────
+const fmt  = n => Number(n||0).toLocaleString('id-ID');
+const fmtD = iso => iso ? new Date(iso).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const isAct= until => until && new Date(until)>new Date();
+const q$   = id => document.getElementById(id);
+const show = el => typeof el==='string'?q$(el).classList.remove('hidden'):el.classList.remove('hidden');
+const hide = el => typeof el==='string'?q$(el).classList.add('hidden'):el.classList.add('hidden');
+
+window.showToast = msg => {
+  const t=q$('toast');t.textContent=msg;
+  t.classList.remove('opacity-0','-translate-y-3');t.classList.add('opacity-100','translate-y-0');
+  setTimeout(()=>{t.classList.add('opacity-0','-translate-y-3');t.classList.remove('opacity-100','translate-y-0')},3000);
+};
+window.toggleLoading = s => { const o=q$('ov'); s?o.classList.replace('hidden','flex'):o.classList.replace('flex','hidden'); };
+window.closeModal    = id => hide(id);
+
+// ── auth guard ──────────────────────────────────────────────────────────
+onAuthStateChanged(auth, async user => {
+  if (!user){ location.replace('/'); return; }
+  const ph = user.email?.replace('@altomus.app','');
+  if (ph !== ADMIN_PHONE) {
+    const snap = await getDoc(doc(db,'users',user.uid)).catch(()=>null);
+    if (!snap?.data()?.isAdmin){ location.replace('/'); return; }
+  }
+  q$('loader').classList.add('hidden');
+  init();
+});
+
+// ── init ────────────────────────────────────────────────────────────────
+function init() {
+  loadSettings();
+  onSnapshot(collection(db,'users'), snap => {
+    allUsers = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    updateStats(); if(activeTab==='users') renderTab();
+  }, e=>console.error('users',e));
+
+  onSnapshot(query(collection(db,'transactions'), orderBy('createdAt','desc')), snap => {
+    allTx = snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateStats(); if(activeTab==='tx') renderTab();
+  }, e=>console.error('tx',e));
+
+  onSnapshot(query(collection(db,'topups'), orderBy('createdAt','desc')), snap => {
+    allTopups = snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateStats(); if(activeTab==='topup') renderTab();
+  }, e=>console.error('topups',e));
+}
+
+async function loadSettings() {
+  const snap = await getDoc(doc(db,'settings','app')).catch(()=>null);
+  if (snap?.exists()) appSettings = { ...appSettings, ...snap.data() };
+  if (!appSettings.packages || !appSettings.packages.length) {
+    appSettings.packages = [
+      {name:'Paket Bronze',desc:'1 Minggu',days:7,price:25000},
+      {name:'Paket Silver',desc:'2 Minggu',days:14,price:50000},
+      {name:'Paket Gold',desc:'1 Bulan Full',days:30,price:100000}
+    ];
+  }
+  if (!appSettings.contacts || !appSettings.contacts.whatsapp) {
+    appSettings.contacts = { whatsapp:'6283872543597', telegram:'@altomediaindonesia' };
+  }
+  if (activeTab==='paket'||activeTab==='ref'||activeTab==='kontak') renderTab();
+}
+
+// ── stats ───────────────────────────────────────────────────────────────
+function updateStats(){
+  const pendingTx  = allTx.filter(t=>t.status==='pending').length;
+  const pendingTop = allTopups.filter(t=>t.status==='pending').length;
+  const aktifU = allUsers.filter(u=>isAct(u.activePackageUntil)).length;
+  q$('stats-row').innerHTML = [
+    statC('Pengguna', allUsers.length, '#dbeafe','#2563eb'),
+    statC('Aktif',    aktifU,          '#dcfce7','#15803d'),
+    statC('Trx⏳',   pendingTx,       '#ffedd5','#ea580c'),
+    statC('Topup⏳', pendingTop,       '#fce7f3','#db2777'),
+  ].join('');
+}
+const statC = (l,v,bg,c) =>
+  `<div class="rounded-2xl p-3 text-center" style="background:${bg}">
+     <p class="font-extrabold text-lg leading-none" style="color:${c}">${v}</p>
+     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">${l}</p>
+   </div>`;
+
+// ── tab switch ──────────────────────────────────────────────────────────
+window.setTab = tab => {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.className='tab-btn off');
+  q$('t-'+tab).className='tab-btn on';
+  const listTabs = ['users','tx','topup','wd'];
+  q$('search-wrap').style.display = listTabs.includes(tab) ? '' : 'none';
+  q$('q').value = '';
+  renderTab();
+};
+
+// ── render dispatcher ───────────────────────────────────────────────────
+window.renderTab = () => {
+  const el = q$('content');
+  el.className='px-4 mt-3 space-y-3 pb-16 fadein';
+  void el.offsetWidth;
+  const ql = q$('q').value.trim().toLowerCase();
+  switch(activeTab){
+    case 'users':  renderUsers(ql,el);  break;
+    case 'paket':  renderPaket(el);     break;
+    case 'tx':     renderTx(ql,el);     break;
+    case 'topup':  renderTopup(ql,el);  break;
+    case 'ref':    renderRef(el);       break;
+    case 'kontak': renderKontak(el);    break;
+    case 'wd':     renderWithdraw(ql,el); break;
+  }
+};
+
+// ─────────────────────────────────────────────
+// TAB: USERS
+// ─────────────────────────────────────────────
+function renderUsers(q,el){
+  const list = allUsers.filter(u=>!q||
+    (u.name||'').toLowerCase().includes(q)||(u.phone||'').includes(q));
+  if(!list.length){el.innerHTML=empty('Tidak ada pengguna');return;}
+  el.innerHTML = list.map(u=>`
+  <div class="card">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-extrabold text-base text-white shrink-0"
+           style="background:${u.blocked?'#ef4444':isAct(u.activePackageUntil)?'#22c55e':'#3b82f6'}">
+        ${(u.name||'?')[0].toUpperCase()}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="font-extrabold text-slate-800 text-sm">${esc(u.name||'—')}</span>
+          ${u.isAdmin?'<span class="badge badge-red">ADMIN</span>':''}
+          ${u.blocked?'<span class="badge badge-red">BLOKIR</span>':''}
+          ${isAct(u.activePackageUntil)
+            ?'<span class="badge badge-green">AKTIF</span>'
+            :'<span class="badge badge-slate">NONAKTIF</span>'}
+        </div>
+        <p class="text-xs text-slate-500 mt-0.5">${esc(u.phone||'—')}</p>
+        <p class="text-[10px] text-slate-400">Saldo: Rp ${fmt(u.balance)}</p>
+        ${isAct(u.activePackageUntil)?`<p class="text-[10px] text-green-600 font-semibold">Aktif s/d ${fmtD(u.activePackageUntil)}</p>`:''}
+      </div>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button onclick='openEditUser("${u.id}")' class="flex-1 btn-p bg-blue-600 text-white py-2 rounded-xl text-xs font-bold">Edit</button>
+      <button onclick='openTopupUser("${u.id}")' class="flex-1 btn-g bg-green-600 text-white py-2 rounded-xl text-xs font-bold">Topup</button>
+      ${!u.isAdmin?`<button onclick='openDelUser("${u.id}","${esc(u.name||'?')}")' class="btn-r bg-red-500 text-white px-3 py-2 rounded-xl text-xs font-bold">Hapus</button>`:''}
+    </div>
+  </div>`).join('');
+}
+
+window.openEditUser = uid => {
+  editingUid = uid;
+  const u = allUsers.find(x=>x.id===uid);
+  if(!u) return;
+  q$('eu-name').value    = u.name||'';
+  q$('eu-phone').value   = u.phone||'';
+  q$('eu-balance').value = u.balance||0;
+  q$('eu-until').value   = u.activePackageUntil ? new Date(u.activePackageUntil).toISOString().slice(0,16) : '';
+  q$('eu-blocked').value = u.blocked ? 'true':'false';
+  show('modal-user');
+};
+
+window.saveUser = async () => {
+  if(!editingUid) return;
+  toggleLoading(true);
+  try {
+    const until = q$('eu-until').value ? new Date(q$('eu-until').value).toISOString() : null;
+    await updateDoc(doc(db,'users',editingUid),{
+      name:    q$('eu-name').value.trim(),
+      phone:   q$('eu-phone').value.trim(),
+      balance: Number(q$('eu-balance').value)||0,
+      activePackageUntil: until,
+      blocked: q$('eu-blocked').value==='true'
+    });
+    closeModal('modal-user');
+    showToast('✅ Data pengguna disimpan!');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.openDelUser = (uid,name) => {
+  pendingDelUid = uid;
+  q$('del-name').textContent = name;
+  show('modal-del');
+};
+
+window.confirmDelete = async () => {
+  if(!pendingDelUid) return;
+  toggleLoading(true);
+  try {
+    await deleteDoc(doc(db,'users',pendingDelUid));
+    closeModal('modal-del');
+    showToast('🗑️ Pengguna dihapus.');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+  pendingDelUid = null;
+};
+
+// ─────────────────────────────────────────────
+// TAB: PAKET
+// ─────────────────────────────────────────────
+function renderPaket(el){
+  const pkgs = appSettings.packages||[];
+  el.innerHTML = `
+  <button onclick="openAddPaket()" class="btn-p w-full bg-blue-600 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Tambah Paket Baru
+  </button>
+  ${pkgs.map((p,i)=>`
+  <div class="card">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <p class="font-extrabold text-slate-800">${esc(p.name)}</p>
+        <p class="text-xs text-slate-500 mt-0.5">${esc(p.desc)} · ${p.days} hari</p>
+        <p class="text-blue-600 font-extrabold text-base mt-1">Rp ${fmt(p.price)}</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openEditPaket(${i})" class="btn-p bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold">Edit</button>
+        <button onclick="deletePaket(${i})" class="btn-r bg-red-500 text-white px-3 py-2 rounded-xl text-xs font-bold">Hapus</button>
+      </div>
+    </div>
+  </div>`).join('')}`;
+}
+
+window.openAddPaket = () => {
+  editingPkIdx = null;
+  q$('mp-title').textContent='Tambah Paket';
+  ['ep-name','ep-desc','ep-days','ep-price'].forEach(id=>q$(id).value='');
+  show('modal-paket');
+};
+
+window.openEditPaket = idx => {
+  editingPkIdx = idx;
+  const p = appSettings.packages[idx];
+  q$('mp-title').textContent='Edit Paket';
+  q$('ep-name').value  = p.name;
+  q$('ep-desc').value  = p.desc;
+  q$('ep-days').value  = p.days;
+  q$('ep-price').value = p.price;
+  show('modal-paket');
+};
+
+window.savePaket = async () => {
+  const pkg = {
+    name: q$('ep-name').value.trim(),
+    desc: q$('ep-desc').value.trim(),
+    days: parseInt(q$('ep-days').value)||1,
+    price: parseInt(q$('ep-price').value)||0
+  };
+  if(!pkg.name){ showToast('Nama paket wajib diisi!'); return; }
+  toggleLoading(true);
+  try {
+    if(editingPkIdx!==null) appSettings.packages[editingPkIdx]=pkg;
+    else appSettings.packages.push(pkg);
+    await setDoc(doc(db,'settings','app'), appSettings, {merge:true});
+    closeModal('modal-paket');
+    showToast('✅ Paket disimpan!');
+    renderTab();
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.deletePaket = async idx => {
+  appSettings.packages.splice(idx,1);
+  toggleLoading(true);
+  try {
+    await setDoc(doc(db,'settings','app'), appSettings, {merge:true});
+    showToast('🗑️ Paket dihapus!');
+    renderTab();
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// TAB: TRANSAKSI
+// ─────────────────────────────────────────────
+function renderTx(q,el){
+  let list = allTx.filter(t=>!q||
+    (t.name||'').toLowerCase().includes(q)||(t.phone||'').includes(q)||(t.package||'').toLowerCase().includes(q));
+
+  const badge = s => s==='pending'?'badge-orange':s==='success'?'badge-green':'badge-red';
+  const label = s => s==='pending'?'PENDING':s==='success'?'SUKSES':'DITOLAK';
+
+  el.innerHTML = (!list.length ? empty('Tidak ada transaksi') :
+    list.map(t=>`
+    <div class="card cursor-pointer" onclick='openTxDetail("${t.id}")'>
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-extrabold text-slate-800 text-sm">${esc(t.name||'—')}</span>
+            <span class="badge ${badge(t.status)}">${label(t.status)}</span>
+          </div>
+          <p class="text-blue-600 font-bold text-xs mt-0.5">${esc(t.package||'—')} — Rp ${fmt(t.price)}</p>
+          <p class="text-slate-400 text-[10px] mt-0.5">${esc(t.phone||'—')} · ${fmtD(t.createdAt)}</p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" class="shrink-0 mt-1"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>`).join(''));
+}
+
+window.openTxDetail = id => {
+  txDetailData = allTx.find(t=>t.id===id);
+  if(!txDetailData) return;
+  const t = txDetailData;
+  q$('tx-detail').innerHTML = rows([
+    ['ID',t.id],['Nama',t.name],['Nomor HP',t.phone],['Paket',t.package],
+    ['Harga','Rp '+fmt(t.price)],['Durasi',t.days+' hari'],
+    ['Status',t.status?.toUpperCase()],['Dibuat',fmtD(t.createdAt)],['UID User',t.uid]
+  ]);
+  const acts = t.status==='pending' ? `
+    <button onclick="approveTx('${t.id}')" class="flex-1 btn-g bg-green-600 text-white py-3 rounded-2xl font-bold text-sm">✅ Setujui</button>
+    <button onclick="rejectTx('${t.id}')"  class="flex-1 btn-r bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">❌ Tolak</button>` : '';
+  q$('tx-actions').innerHTML = acts;
+  show('modal-tx');
+};
+
+window.approveTx = async id => {
+  const t = allTx.find(x=>x.id===id); if(!t) return;
+  closeModal('modal-tx'); toggleLoading(true);
+  try {
+    await updateDoc(doc(db,'transactions',id),{status:'success'});
+    const uRef  = doc(db,'users',t.uid);
+    const uSnap = await getDoc(uRef);
+    const cur   = uSnap.exists()?uSnap.data():{};
+    let end = new Date();
+    if(cur.activePackageUntil && new Date(cur.activePackageUntil)>end) end=new Date(cur.activePackageUntil);
+    end.setDate(end.getDate()+Number(t.days||0));
+    await updateDoc(uRef,{activePackageUntil:end.toISOString()});
+    showToast('✅ Transaksi disetujui & paket diaktifkan!');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.rejectTx = async id => {
+  closeModal('modal-tx'); toggleLoading(true);
+  try {
+    await updateDoc(doc(db,'transactions',id),{status:'rejected'});
+    showToast('❌ Transaksi ditolak.');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// TAB: TOPUP
+// ─────────────────────────────────────────────
+function renderTopup(q,el){
+  let list = allTopups.filter(t=>!q||
+    (t.name||'').toLowerCase().includes(q)||(t.phone||'').includes(q));
+
+  const badge = s => s==='pending'?'badge-orange':s==='approved'?'badge-green':'badge-red';
+  const label = s => s==='pending'?'PENDING':s==='approved'?'DISETUJUI':'DITOLAK';
+
+  el.innerHTML = `
+  <button onclick="openTopupManual()" class="btn-g w-full bg-green-600 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Topup Manual (Cari User)
+  </button>
+  ${!list.length ? empty('Tidak ada data topup') :
+    list.map(t=>`
+    <div class="card cursor-pointer" onclick='openTopupDetailModal("${t.id}")'>
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-extrabold text-slate-800 text-sm">${esc(t.name||'—')}</span>
+            <span class="badge ${badge(t.status)}">${label(t.status)}</span>
+          </div>
+          <p class="text-green-600 font-bold text-xs mt-0.5">Rp ${fmt(t.amount)}</p>
+          <p class="text-slate-400 text-[10px] mt-0.5">${esc(t.phone||'—')} · ${fmtD(t.createdAt)}</p>
+          ${t.note?`<p class="text-slate-500 text-[10px]">${esc(t.note)}</p>`:''}
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" class="shrink-0 mt-1"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>`).join('')}`;
+}
+
+window.openTopupManual = () => {
+  const name = prompt('Masukkan nama atau nomor HP user yang ingin di-topup:');
+  if(!name) return;
+  const found = allUsers.filter(u=>
+    (u.name||'').toLowerCase().includes(name.toLowerCase())||(u.phone||'').includes(name));
+  if(!found.length){ showToast('User tidak ditemukan!'); return; }
+  if(found.length===1){ openTopupUser(found[0].id); return; }
+  const choice = prompt(`Ditemukan ${found.length} user:\n`+found.map((u,i)=>`${i+1}. ${u.name} (${u.phone})`).join('\n')+'\n\nMasukkan nomor urut:');
+  const idx = parseInt(choice)-1;
+  if(found[idx]) openTopupUser(found[idx].id);
+};
+
+window.openTopupUser = uid => {
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  topupTargetUid = uid;
+  q$('topup-user-info').innerHTML = `
+    <p class="font-bold text-slate-800">${esc(u.name||'—')}</p>
+    <p class="text-slate-500 text-xs">${esc(u.phone||'—')}</p>
+    <p class="text-blue-600 font-semibold text-sm mt-1">Saldo saat ini: Rp ${fmt(u.balance)}</p>`;
+  q$('tu-amount').value=''; q$('tu-note').value='';
+  show('modal-topup');
+};
+
+window.doTopup = async () => {
+  const amount = parseInt(q$('tu-amount').value)||0;
+  const note   = q$('tu-note').value.trim();
+  if(!amount){ showToast('Masukkan jumlah topup!'); return; }
+  const u = allUsers.find(x=>x.id===topupTargetUid); if(!u) return;
+  closeModal('modal-topup'); toggleLoading(true);
+  try {
+    const newBal = (u.balance||0)+amount;
+    await updateDoc(doc(db,'users',topupTargetUid),{balance:newBal});
+    await addDoc(collection(db,'topups'),{
+      uid:topupTargetUid, name:u.name, phone:u.phone,
+      amount, note, status:'approved',
+      createdAt: new Date().toISOString(), approvedBy:'admin'
+    });
+    showToast(`✅ Topup Rp ${fmt(amount)} berhasil untuk ${u.name}!`);
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.openTopupDetailModal = id => {
+  topupDetailData = allTopups.find(t=>t.id===id); if(!topupDetailData) return;
+  const t = topupDetailData;
+  q$('topup-detail').innerHTML = rows([
+    ['ID',t.id],['Nama',t.name],['Nomor HP',t.phone],
+    ['Jumlah','Rp '+fmt(t.amount)],['Keterangan',t.note||'—'],
+    ['Status',t.status?.toUpperCase()],['Tanggal',fmtD(t.createdAt)],['UID',t.uid]
+  ]);
+  const acts = t.status==='pending' ? `
+    <button onclick="approveTopup('${t.id}')" class="flex-1 btn-g bg-green-600 text-white py-3 rounded-2xl font-bold text-sm">✅ Setujui</button>
+    <button onclick="rejectTopup('${t.id}')"  class="flex-1 btn-r bg-red-500 text-white py-3 rounded-2xl font-bold text-sm">❌ Tolak</button>` : '';
+  q$('topup-actions').innerHTML = acts;
+  show('modal-topup-detail');
+};
+
+window.approveTopup = async id => {
+  const t = allTopups.find(x=>x.id===id); if(!t) return;
+  closeModal('modal-topup-detail'); toggleLoading(true);
+  try {
+    const uRef  = doc(db,'users',t.uid);
+    const uSnap = await getDoc(uRef);
+    const cur   = uSnap.exists()?uSnap.data():{};
+    await updateDoc(uRef, {balance:(cur.balance||0)+Number(t.amount)});
+    await updateDoc(doc(db,'topups',id), {status:'approved', approvedAt:new Date().toISOString()});
+    showToast(`✅ Topup Rp ${fmt(t.amount)} disetujui!`);
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.rejectTopup = async id => {
+  closeModal('modal-topup-detail'); toggleLoading(true);
+  try {
+    await updateDoc(doc(db,'topups',id),{status:'rejected'});
+    showToast('❌ Topup ditolak.');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// TAB: REFERRAL
+// ─────────────────────────────────────────────
+function renderRef(el){
+  el.innerHTML = `
+  <div class="card space-y-4">
+    <div>
+      <h3 class="font-extrabold text-slate-800">Komisi Referral</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Bonus yang diberikan ke pengguna yang mengajak teman mendaftar & membeli paket.</p>
+    </div>
+    <div>
+      <label class="label">Jumlah Komisi (Rp)</label>
+      <input id="ref-amount" type="number" class="inp" value="${appSettings.referralCommission||10000}" placeholder="10000">
+    </div>
+    <button onclick="saveReferral()" class="btn-p w-full bg-blue-600 text-white py-3.5 rounded-2xl font-bold text-sm">Simpan Komisi</button>
+  </div>`;
+}
+
+window.saveReferral = async () => {
+  const val = parseInt(q$('ref-amount').value)||0;
+  toggleLoading(true);
+  try {
+    appSettings.referralCommission = val;
+    await setDoc(doc(db,'settings','app'), appSettings, {merge:true});
+    showToast('✅ Komisi referral disimpan!');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// TAB: KONTAK
+// ─────────────────────────────────────────────
+function renderKontak(el){
+  const c = appSettings.contacts || {};
+  el.innerHTML = `
+  <div class="card space-y-4">
+    <div>
+      <h3 class="font-extrabold text-slate-800">Kontak Admin</h3>
+      <p class="text-xs text-slate-400 mt-0.5">Kontak ini akan ditampilkan di halaman profil pengguna.</p>
+    </div>
+    <div><label class="label">Nomor WhatsApp (tanpa +)</label><input id="k-wa" class="inp" value="${esc(c.whatsapp||'')}" placeholder="6283872543597"></div>
+    <div><label class="label">Username Telegram</label><input id="k-tg" class="inp" value="${esc(c.telegram||'')}" placeholder="@altomediaindonesia"></div>
+    <div><label class="label">Email Dukungan (opsional)</label><input id="k-em" class="inp" value="${esc(c.email||'')}" placeholder="support@altomus.app"></div>
+    <div><label class="label">Link Instagram (opsional)</label><input id="k-ig" class="inp" value="${esc(c.instagram||'')}" placeholder="@altomediaindonesia"></div>
+    <button onclick="saveKontak()" class="btn-p w-full bg-blue-600 text-white py-3.5 rounded-2xl font-bold text-sm">Simpan Kontak</button>
+  </div>`;
+}
+
+window.saveKontak = async () => {
+  toggleLoading(true);
+  try {
+    appSettings.contacts = {
+      whatsapp:  q$('k-wa').value.trim(),
+      telegram:  q$('k-tg').value.trim(),
+      email:     q$('k-em').value.trim(),
+      instagram: q$('k-ig').value.trim()
+    };
+    await setDoc(doc(db,'settings','app'), appSettings, {merge:true});
+    showToast('✅ Kontak admin disimpan!');
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// TAB: WITHDRAW
+// ─────────────────────────────────────────────
+async function renderWithdraw(ql, el) {
+  el.innerHTML = '<div class="card text-center text-slate-400 text-sm py-10">Memuat data...</div>';
+  try {
+    const snap = await getDocs(collection(db,'withdrawals'));
+    let docs = [];
+    snap.forEach(d => docs.push({id:d.id,...d.data()}));
+    docs.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+    if (ql) docs = docs.filter(d =>
+      (d.name||'').toLowerCase().includes(ql) ||
+      (d.phone||'').includes(ql) ||
+      (d.method||'').toLowerCase().includes(ql) ||
+      (d.account||'').includes(ql)
+    );
+    if (!docs.length) { el.innerHTML = empty('Belum ada permintaan tarik saldo'); return; }
+    el.innerHTML = docs.map(d => {
+      const badge = d.status === 'approved'
+        ? '<span class="badge badge-green">Disetujui</span>'
+        : d.status === 'rejected'
+          ? '<span class="badge badge-red">Ditolak</span>'
+          : '<span class="badge badge-orange">Pending</span>';
+      return `
+      <div class="card space-y-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="font-extrabold text-slate-800">${esc(d.name)}</p>
+            <p class="text-xs text-slate-400">${esc(d.phone)} · ${(d.createdAt||'').slice(0,10)}</p>
+          </div>
+          ${badge}
+        </div>
+        <div class="rounded-xl bg-slate-50 p-3 space-y-1">
+          ${rows([
+            ['Metode', d.method + ' (' + (d.type==='bank'?'Bank':'E-Wallet') + ')'],
+            ['Rekening/Akun', d.account],
+            ['Atas Nama', d.owner],
+            ['Jumlah', 'Rp ' + formatIDR(d.amount||0)]
+          ])}
+        </div>
+        ${d.status === 'pending' ? `
+        <div class="flex gap-2">
+          <button onclick="approveWd('${d.id}','${esc(d.name)}','${esc(d.phone)}','${esc(d.method)}','${esc(d.account)}','${esc(d.owner)}',${d.amount||0})"
+            class="flex-1 bg-green-600 text-white py-2.5 rounded-xl font-bold text-xs">✓ Setujui & Transfer</button>
+          <button onclick="rejectWd('${d.id}')"
+            class="flex-1 bg-red-500 text-white py-2.5 rounded-xl font-bold text-xs">✕ Tolak</button>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e){ el.innerHTML = empty('Gagal memuat: '+e.message); }
+}
+
+window.approveWd = async (id, name, phone, method, account, owner, amount) => {
+  if (!confirm(`Setujui penarikan Rp ${formatIDR(amount)} via ${method} ke ${account} a/n ${owner}?`)) return;
+  toggleLoading(true);
+  try {
+    await updateDoc(doc(db,'withdrawals',id),{status:'approved', approvedAt:new Date().toISOString()});
+    const waNum = appSettings.contacts?.whatsapp || '6283872543597';
+    const msg = `✅ Penarikan saldo ALTOMUS disetujui!\n\nNama: ${name}\nHP: ${phone}\nMetode: ${method}\nRekening: ${account}\nA/N: ${owner}\nJumlah: Rp ${formatIDR(amount)}\n\nDana sedang diproses.`;
+    window.open(`https://wa.me/${phone.replace(/^0/,'62')}?text=${encodeURIComponent(msg)}`, '_blank');
+    showToast('✅ Penarikan disetujui!');
+    renderTab();
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+window.rejectWd = async (id) => {
+  if (!confirm('Tolak permintaan penarikan ini?')) return;
+  toggleLoading(true);
+  try {
+    await updateDoc(doc(db,'withdrawals',id),{status:'rejected', rejectedAt:new Date().toISOString()});
+    showToast('Penarikan ditolak.');
+    renderTab();
+  } catch(e){ showToast('Gagal: '+e.message); }
+  toggleLoading(false);
+};
+
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const empty = msg => `<div class="card text-center text-slate-400 text-sm py-10">${msg}</div>`;
+const rows  = arr => arr.map(([k,v])=>`
+  <div class="flex gap-3 py-1.5 border-b border-slate-50 last:border-0">
+    <span class="text-slate-400 text-[11px] w-28 shrink-0 font-semibold">${k}</span>
+    <span class="text-slate-700 text-[11px] font-bold break-all">${esc(v||'—')}</span>
+  </div>`).join('');
+
+window.handleLogout = async () => {
+  toggleLoading(true);
+  try { await signOut(auth); } finally { location.replace('/'); }
+};
+
+// ─────────────────────────────────────────────
+// Firestore rules info (Firestore rules need to allow reads to settings)
+// ─────────────────────────────────────────────
+</script>
+</body>
+</html>

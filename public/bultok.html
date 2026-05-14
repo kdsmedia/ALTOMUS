@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BulTok TikTok Live Stream Interactive | By Sidhanie</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-image: url('bg/bg0.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            height: 100vh;
+            width: 100vw;
+            transition: background-image 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            body { background-attachment: scroll; }
+        }
+
+        #settingsButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        #settingsButton:hover {
+            background: #007bff;
+            transform: scale(1.1);
+        }
+
+        #settingsPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border: 5px solid #007bff;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #settingsPopup h2 {
+            margin-top: 0;
+            color: #3498db;
+            text-align: center;
+        }
+
+        #settingsPopup input[type="text"],
+        #settingsPopup select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #3498db;
+            border-radius: 6px;
+            background-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        #settingsPopup label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            text-align: left;
+        }
+
+        #enableBackground {
+            width: auto;
+            margin-left: 0;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 15px;
+        }
+
+        #settingsPopup button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        #settingsPopup button:hover { background-color: #0056b3; }
+        #settingsPopup #closeButton { background-color: #e74c3c; }
+        #settingsPopup #closeButton:hover { background-color: #c0392b; }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .floating-photo {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+            z-index: 500;
+            opacity: 1;
+            transition: transform 3s ease-in-out, opacity 1s ease-out;
+        }
+
+        .big-photo {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            width: 300px;
+            height: 300px;
+            display: none;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            background: linear-gradient(#2c3e50, #2c3e50) padding-box,
+                        linear-gradient(45deg, #e74c3c, #f1c40f, #2ecc71, #3498db) border-box;
+            border: 10px solid transparent;
+            box-shadow: 0 0 40px rgba(52, 152, 219, 0.9);
+            z-index: 9999;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
+            opacity: 0;
+        }
+
+        .big-photo.show {
+            display: block;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        #messageBox {
+            position: fixed;
+            top: 10px; left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            font-weight: bold;
+        }
+
+        #videoBackground {
+            position: fixed;
+            right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto;
+            z-index: -100;
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #videoBackground.active { opacity: 1; }
+
+        #connectionStatus {
+            position: fixed;
+            top: 10px; right: 10px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            z-index: 999;
+            background: rgba(231, 76, 60, 0.85);
+            color: white;
+        }
+        #connectionStatus.connected {
+            background: rgba(46, 204, 113, 0.85);
+        }
+    </style>
+</head>
+<body>
+    <video muted loop id="videoBackground"></video>
+    <div id="messageBox"></div>
+    <div id="connectionStatus">● Tidak Terhubung</div>
+    <button id="settingsButton" title="Settings">&#9881;</button>
+
+    <div id="overlay"></div>
+    <div id="settingsPopup">
+        <h2>Settings</h2>
+        <input type="text" id="usernameInput" placeholder="Masukkan username TikTok" />
+
+        <label for="backgroundSelect">Pilih Background:</label>
+        <select id="backgroundSelect">
+            <option value="bg/bg0.jpeg" data-type="image">BG 0</option>
+            <option value="bg/bg1.jpeg" data-type="image">BG 1</option>
+            <option value="bg/bg2.png"  data-type="image">BG 2</option>
+            <option value="bg/bg3.jpg"  data-type="image">BG 3</option>
+            <option value="bg/bg4.jpeg" data-type="image">BG 4</option>
+            <option value="bg/bg5.jpg"  data-type="image">BG 5</option>
+            <option value="bg/bg6.jpg"  data-type="image">BG 6</option>
+            <option value="bg/bg7.jpg"  data-type="image">BG 7</option>
+            <option value="bg/bg8.jpg"  data-type="image">BG 8</option>
+            <option value="bg/bg9.jpg"  data-type="image">BG 9</option>
+            <option value="bg/bg10.jpg" data-type="image">BG 10</option>
+            <option value="bg/vid1.mp4" data-type="video">Video 1</option>
+            <option value="bg/vid2.mp4" data-type="video">Video 2</option>
+        </select>
+
+        <div class="checkbox-container">
+            <input type="checkbox" id="enableBackground" checked />
+            <label for="enableBackground">Aktifkan Background</label>
+        </div>
+
+        <button id="connectButton">Connect ke TikTok Live</button>
+        <button id="closeButton">Tutup</button>
+    </div>
+
+    <script>
+        // ========================================================
+        // WEBSOCKET SETUP
+        // ========================================================
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsHost = window.location.host;
+        const WS_URL = `${wsProtocol}://${wsHost}/ws`;
+        console.log('Connecting WebSocket to:', WS_URL);
+
+        let ws;
+        const messageBox = document.getElementById('messageBox');
+        const statusEl = document.getElementById('connectionStatus');
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected.');
+                showMessage('Terhubung ke server. Siap connect ke TikTok Live.', 3000);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected. Retry in 3s...');
+                showMessage('Koneksi server terputus. Mencoba ulang...', 4000);
+                statusEl.textContent = '● Tidak Terhubung';
+                statusEl.classList.remove('connected');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                let data;
+                try {
+                    data = JSON.parse(event.data);
+                } catch (e) {
+                    console.error('Invalid JSON from server:', e);
+                    return;
+                }
+
+                switch (data.type) {
+                    case 'floating-photo':
+                        showFloatingPhoto(data.profilePictureUrl, data.userName);
+                        break;
+                    case 'big-photo':
+                        showBigPhoto(data.profilePictureUrl, data.userName);
+                        break;
+                    case 'play-sound':
+                        playSound(data.sound);
+                        break;
+                    case 'stop-sound':
+                        stopSound();
+                        break;
+                    case 'status':
+                        showMessage(data.message, 4000);
+                        if (data.message && data.message.includes('Terhubung')) {
+                            statusEl.textContent = '● Terhubung ke Live';
+                            statusEl.classList.add('connected');
+                        }
+                        break;
+                    case 'roomUser':
+                        console.log('Viewer count:', data.viewerCount);
+                        break;
+                    default:
+                        console.log('Unknown message type:', data.type, data);
+                }
+            };
+        }
+
+        connectWebSocket();
+
+        // ========================================================
+        // UTILITY
+        // ========================================================
+        function showMessage(message, duration = 3000) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            setTimeout(() => { messageBox.style.opacity = 1; }, 50);
+            setTimeout(() => {
+                messageBox.style.opacity = 0;
+                setTimeout(() => { messageBox.style.display = 'none'; }, 500);
+            }, duration);
+        }
+
+        // ========================================================
+        // AUDIO — tanpa bentrok, satu suara aktif sekaligus
+        // ========================================================
+        let currentAudio = null;
+        let soundQueue = [];
+        let isPlaying = false;
+
+        function playSound(soundPath) {
+            // Tambahkan ke antrian, maksimum 3 suara dalam antrian
+            if (soundQueue.length < 3) {
+                soundQueue.push(soundPath);
+            }
+            if (!isPlaying) {
+                playNextInQueue();
+            }
+        }
+
+        function playNextInQueue() {
+            if (soundQueue.length === 0) {
+                isPlaying = false;
+                return;
+            }
+            isPlaying = true;
+            const soundPath = soundQueue.shift();
+
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.src = '';
+                currentAudio = null;
+            }
+
+            const audio = new Audio(soundPath);
+            currentAudio = audio;
+
+            audio.play().catch(e => {
+                console.warn('Autoplay blocked. Klik halaman untuk mengaktifkan suara.', e);
+                showMessage('Klik di halaman ini untuk mengaktifkan suara!', 4000);
+                isPlaying = false;
+                currentAudio = null;
+                // Coba suara berikutnya setelah jeda singkat
+                setTimeout(playNextInQueue, 500);
+            });
+
+            audio.onended = () => {
+                if (currentAudio === audio) currentAudio = null;
+                isPlaying = false;
+                playNextInQueue();
+            };
+
+            audio.onerror = () => {
+                console.error(`File suara tidak ditemukan: ${soundPath}`);
+                if (currentAudio === audio) currentAudio = null;
+                isPlaying = false;
+                playNextInQueue();
+            };
+        }
+
+        function stopSound() {
+            soundQueue = [];
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.src = '';
+                currentAudio = null;
+            }
+            isPlaying = false;
+        }
+
+        // Aktifkan audio setelah interaksi pengguna pertama (bypass autoplay policy)
+        document.addEventListener('click', () => {
+            const unlock = new Audio();
+            unlock.play().catch(() => {});
+        }, { once: true });
+
+        // ========================================================
+        // VISUAL EFFECTS
+        // ========================================================
+        function showFloatingPhoto(pictureUrl, userName) {
+            const img = document.createElement('img');
+            img.src = pictureUrl;
+            img.alt = userName;
+            img.classList.add('floating-photo');
+            document.body.appendChild(img);
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const size = 80;
+
+            const startX = Math.random() * (vw - size);
+            const startY = Math.random() * (vh - size);
+            img.style.left = `${startX}px`;
+            img.style.top = `${startY}px`;
+
+            // Gerak acak setiap 800ms
+            const intervalId = setInterval(() => {
+                const newX = Math.random() * (window.innerWidth - size);
+                const newY = Math.random() * (window.innerHeight - size);
+                img.style.transform = `translate(${newX - img.offsetLeft}px, ${newY - img.offsetTop}px)`;
+            }, 800);
+
+            // Hilang setelah 4 detik
+            setTimeout(() => {
+                clearInterval(intervalId);
+                img.style.opacity = '0';
+                setTimeout(() => img.remove(), 1000);
+            }, 4000);
+        }
+
+        function showBigPhoto(pictureUrl, userName) {
+            const div = document.createElement('div');
+            div.classList.add('big-photo');
+            div.style.backgroundImage = `url(${pictureUrl})`;
+
+            const nameLabel = document.createElement('div');
+            nameLabel.textContent = userName;
+            nameLabel.style.cssText = `
+                position: absolute; bottom: -40px; width: 100%;
+                text-align: center; color: white;
+                text-shadow: 0 0 5px black; font-size: 1.2rem;
+            `;
+            div.appendChild(nameLabel);
+            document.body.appendChild(div);
+
+            setTimeout(() => div.classList.add('show'), 50);
+            setTimeout(() => {
+                div.classList.remove('show');
+                setTimeout(() => div.remove(), 500);
+            }, 4000);
+        }
+
+        // ========================================================
+        // SETTINGS UI
+        // ========================================================
+        document.getElementById('settingsButton').addEventListener('click', () => {
+            document.getElementById('settingsPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        });
+
+        document.getElementById('closeButton').addEventListener('click', () => {
+            document.getElementById('settingsPopup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        });
+
+        document.getElementById('connectButton').addEventListener('click', () => {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                showMessage('Mohon masukkan TikTok username.', 3000);
+                return;
+            }
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showMessage('Server belum siap. Tunggu sebentar lalu coba lagi.', 3000);
+                return;
+            }
+            ws.send(JSON.stringify({ type: 'connect', username }));
+            document.getElementById('settingsPopup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            showMessage(`Mencoba terhubung ke @${username}...`, 4000);
+        });
+
+        // ========================================================
+        // BACKGROUND (GAMBAR & VIDEO)
+        // ========================================================
+        const enableBackground = document.getElementById('enableBackground');
+        const backgroundSelect = document.getElementById('backgroundSelect');
+        const body = document.body;
+        const videoBackground = document.getElementById('videoBackground');
+
+        function updateBackground() {
+            const selected = backgroundSelect.options[backgroundSelect.selectedIndex];
+            const val = selected.value;
+            const type = selected.getAttribute('data-type');
+
+            videoBackground.pause();
+            videoBackground.classList.remove('active');
+            videoBackground.style.display = 'none';
+            body.style.backgroundImage = 'none';
+
+            if (!enableBackground.checked) {
+                body.style.backgroundColor = '#1c1c1c';
+                return;
+            }
+
+            if (type === 'video') {
+                videoBackground.src = val;
+                videoBackground.style.display = 'block';
+                videoBackground.load();
+                videoBackground.play().catch(e => {
+                    console.log('Video autoplay blocked:', e.message);
+                });
+                videoBackground.classList.add('active');
+            } else {
+                body.style.backgroundImage = `url(${val})`;
+                body.style.backgroundColor = 'transparent';
+            }
+        }
+
+        enableBackground.addEventListener('change', updateBackground);
+        backgroundSelect.addEventListener('change', updateBackground);
+
+        window.addEventListener('load', () => {
+            updateBackground();
+            document.addEventListener('click', () => {
+                if (videoBackground.src && videoBackground.paused) {
+                    videoBackground.play().catch(() => {});
+                }
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>

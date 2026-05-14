@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ALTOMUS - Game Live TikTok Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+        *::-webkit-scrollbar { display: none; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        html, body { overscroll-behavior-y: contain; }
+
+        .btn-primary {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #1e40af;
+            position: relative; top: 0;
+        }
+        .btn-primary:active { top: 3px; box-shadow: 0 1px 0 #1e40af; }
+
+        .btn-dark {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #0f172a;
+            position: relative; top: 0;
+        }
+        .btn-dark:active { top: 3px; box-shadow: 0 1px 0 #0f172a; }
+
+        .btn-green {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 0 #15803d;
+            position: relative; top: 0;
+        }
+        .btn-green:active { top: 3px; box-shadow: 0 1px 0 #15803d; }
+
+        .nav-bottom {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .active-nav { color: #3b82f6; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .page-transition { animation: fadeIn 0.28s ease-out forwards; }
+
+        /* Game card gradient banners */
+        .game-banner-1 { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+        .game-banner-2 { background: linear-gradient(135deg, #134e5e, #71b280); }
+        .game-banner-3 { background: linear-gradient(135deg, #373b44, #4286f4); }
+
+        /* Floating TikTok logo anim */
+        @keyframes float {
+            0%,100% { transform: translateY(0px) rotate(-4deg); }
+            50%      { transform: translateY(-8px) rotate(4deg); }
+        }
+        .float-anim { animation: float 3.5s ease-in-out infinite; }
+
+        /* BulTok modal slide-up */
+        #bultok-modal { transition: transform 0.3s ease, opacity 0.3s ease; }
+        #bultok-modal.hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+        #bultok-modal.open   { transform: translateY(0);    opacity: 1; pointer-events: all; }
+    </style>
+</head>
+<body class="pb-24">
+
+<!-- ══════════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════════ -->
+<div id="auth-screen" class="hidden fixed inset-0 z-[100] bg-slate-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-white p-7 sm:p-9 rounded-[2.5rem] shadow-2xl space-y-6">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-3 shadow-lg">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+            </div>
+            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">ALTOMUS</h1>
+            <p id="auth-title" class="text-slate-400 mt-1 text-sm">Masuk ke akun Anda</p>
+        </div>
+
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Nomor Ponsel</label>
+                <input type="tel" id="login-phone" placeholder="08xxxxxxxxxx" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1" required>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Kata Sandi</label>
+                <input type="password" id="login-pass" placeholder="••••••••" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1" required>
+            </div>
+            <button type="submit" class="btn-primary w-full bg-blue-600 text-white p-4 rounded-2xl font-bold text-base">Masuk Sekarang</button>
+            <p class="text-center text-sm text-slate-400">Belum punya akun? <a href="javascript:toggleAuthMode()" class="text-blue-600 font-bold">Daftar</a></p>
+        </form>
+
+        <form id="register-form" class="hidden space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Nama Lengkap</label>
+                <input type="text" id="reg-name" placeholder="Nama Anda" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1" required>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Nomor Ponsel</label>
+                <input type="tel" id="reg-phone" placeholder="08xxxxxxxxxx" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1" required>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Kata Sandi</label>
+                <input type="password" id="reg-pass" placeholder="••••••••" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1" required>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Kode Undangan (Opsional)</label>
+                <input type="text" id="reg-ref" placeholder="ALT-XXXX" class="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-blue-500 outline-none mt-1">
+            </div>
+            <button type="submit" class="btn-primary w-full bg-blue-600 text-white p-4 rounded-2xl font-bold text-base">Buat Akun</button>
+            <p class="text-center text-sm text-slate-400">Sudah punya akun? <a href="javascript:toggleAuthMode()" class="text-blue-600 font-bold">Masuk</a></p>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════ -->
+<header class="px-5 py-4 flex justify-between items-center bg-white sticky top-0 z-40 shadow-sm">
+    <div>
+        <p class="text-xs text-slate-400 font-semibold">Hello,</p>
+        <h1 class="text-lg font-extrabold text-slate-800 leading-tight" id="display-name">Guest</h1>
+    </div>
+    <div class="flex items-center gap-3">
+        <div class="text-right">
+            <p class="text-[9px] text-slate-400 font-bold uppercase leading-none tracking-wider">Saldo</p>
+            <p class="text-sm font-bold text-blue-600" id="display-balance">Rp 0</p>
+        </div>
+        <div id="admin-badge" class="hidden bg-red-100 text-red-600 text-[9px] px-2 py-1 rounded-lg font-bold tracking-wider">ADMIN</div>
+    </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════ -->
+<main id="app-content" class="px-4 mt-4 space-y-6 page-transition w-full max-w-2xl mx-auto"></main>
+
+<!-- ══════════════════════════════════════════════
+     BOTTOM NAV
+══════════════════════════════════════════════ -->
+<nav class="nav-bottom fixed bottom-0 left-0 right-0 h-[68px] px-2 flex justify-between items-center z-50">
+    <button onclick="router('home')"  class="nav-item flex flex-col items-center gap-0.5 active-nav flex-1 py-2" id="nav-home">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span class="text-[8px] font-bold uppercase tracking-wider">Home</span>
+    </button>
+    <button onclick="router('paket')" class="nav-item flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-2" id="nav-paket">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        <span class="text-[8px] font-bold uppercase tracking-wider">Paket</span>
+    </button>
+    <button onclick="router('game')"  class="nav-item flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-2" id="nav-game">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="15.5" cy="11.5" r=".5" fill="currentColor"/><circle cx="18.5" cy="9.5" r=".5" fill="currentColor"/></svg>
+        <span class="text-[8px] font-bold uppercase tracking-wider">Game</span>
+    </button>
+    <button onclick="router('saldo')" class="nav-item flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-2" id="nav-saldo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+        <span class="text-[8px] font-bold uppercase tracking-wider">Saldo</span>
+    </button>
+    <button onclick="router('profil')" class="nav-item flex flex-col items-center gap-0.5 text-slate-400 flex-1 py-2" id="nav-profil">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="text-[8px] font-bold uppercase tracking-wider">Profil</span>
+    </button>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     OVERLAYS
+══════════════════════════════════════════════ -->
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-bold shadow-2xl opacity-0 transform -translate-y-4 transition-all duration-300 z-[200] pointer-events-none whitespace-nowrap"></div>
+
+<div id="loading-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[150] flex items-center justify-center hidden">
+    <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+</div>
+
+<!-- QRIS Modal (Paket & TopUp) -->
+<div id="qris-modal" class="fixed inset-0 bg-black/70 z-[110] flex items-end justify-center hidden" style="backdrop-filter:blur(4px)">
+    <div class="bg-white w-full max-w-md rounded-t-[2.5rem] shadow-2xl overflow-y-auto" style="max-height:92vh">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+            <div>
+                <p id="qris-mode-label" class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Pembayaran Paket</p>
+                <h3 id="qris-title" class="text-lg font-extrabold text-slate-800">QRIS</h3>
+            </div>
+            <button onclick="closeQrisModal()" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-base">✕</button>
+        </div>
+
+        <div class="px-6 py-4 space-y-4">
+
+            <!-- Nominal picker — hanya muncul saat mode topup -->
+            <div id="qris-nominal-picker" class="hidden space-y-3">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pilih Nominal Topup</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setQrisNominal(20000,this)"  class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 20rb</button>
+                    <button onclick="setQrisNominal(50000,this)"  class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 50rb</button>
+                    <button onclick="setQrisNominal(100000,this)" class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 100rb</button>
+                    <button onclick="setQrisNominal(200000,this)" class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 200rb</button>
+                    <button onclick="setQrisNominal(500000,this)" class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 500rb</button>
+                    <button onclick="setQrisNominal(1000000,this)" class="btn-nominal py-3 rounded-2xl font-bold text-sm bg-slate-100 text-slate-700 border-2 border-transparent transition-all">Rp 1jt</button>
+                </div>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
+                    <input id="qris-custom-amount" type="number" placeholder="Nominal lain (min. Rp 10.000)"
+                        oninput="onCustomAmount(this)"
+                        class="w-full pl-10 pr-4 py-3.5 bg-slate-100 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button onclick="doGenerateQris()" class="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-extrabold text-sm shadow-lg shadow-blue-200">
+                    Buat QRIS Pembayaran →
+                </button>
+            </div>
+
+            <!-- QR Result area -->
+            <div id="qris-result" class="hidden space-y-4">
+                <!-- Timer -->
+                <div class="flex items-center justify-center gap-2 bg-red-50 rounded-2xl py-2.5">
+                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <span id="qris-timer" class="text-red-600 font-extrabold text-sm">Selesaikan dalam 03:00</span>
+                </div>
+
+                <!-- Capture area (untuk download) -->
+                <div id="qris-capture" class="bg-gradient-to-b from-blue-600 to-blue-800 rounded-3xl p-5 text-white text-center space-y-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <span class="font-extrabold text-sm tracking-wide">ALTOMUS</span>
+                    </div>
+                    <div class="bg-white rounded-2xl p-3 flex justify-center mx-auto" style="width:fit-content">
+                        <div id="qris-qrcode"></div>
+                    </div>
+                    <div>
+                        <p class="text-blue-200 text-[10px] font-semibold uppercase tracking-wider">Total Bayar</p>
+                        <p id="qris-total-display" class="text-2xl font-black"></p>
+                    </div>
+                    <div class="border-t border-blue-500/50 pt-2">
+                        <p id="qris-trx-id" class="text-blue-300 text-[9px] font-mono"></p>
+                        <p class="text-blue-400 text-[9px] mt-0.5">Berlaku hanya untuk transaksi ini</p>
+                    </div>
+                </div>
+
+                <!-- Cara bayar -->
+                <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                    <p class="font-bold text-amber-800 text-xs mb-2">📋 Cara Pembayaran:</p>
+                    <ol class="space-y-1 text-[11px] text-amber-700 list-decimal list-inside">
+                        <li>Tap <b>"Simpan QR Code"</b> di bawah</li>
+                        <li>Buka BCA, Dana, GoPay, OVO, dll.</li>
+                        <li>Pilih menu <b>Scan / QRIS</b></li>
+                        <li>Klik ikon <b>Galeri</b> → pilih gambar QR tadi</li>
+                        <li>Nominal muncul otomatis → bayar!</li>
+                    </ol>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex gap-3">
+                    <button onclick="downloadQris()" class="flex-1 bg-slate-800 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        Simpan QR
+                    </button>
+                    <button onclick="confirmQrisPayment()" class="flex-1 bg-green-600 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Sudah Bayar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        <div class="h-5"></div>
+    </div>
+</div>
+
+<!-- ══ MODAL: Tarik Saldo ══ -->
+<div id="withdraw-modal" class="fixed inset-0 bg-black/70 z-[110] flex items-end justify-center hidden" style="backdrop-filter:blur(4px)">
+    <div class="bg-white w-full max-w-md rounded-t-[2.5rem] shadow-2xl overflow-y-auto" style="max-height:92vh">
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100">
+            <div>
+                <p class="text-[9px] font-bold text-orange-500 uppercase tracking-widest">Tarik Saldo</p>
+                <h3 class="text-lg font-extrabold text-slate-800">Penarikan Dana</h3>
+            </div>
+            <button onclick="document.getElementById('withdraw-modal').classList.add('hidden')" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-base">✕</button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+            <!-- Info saldo -->
+            <div class="bg-slate-900 rounded-2xl px-5 py-4 text-white flex items-center justify-between">
+                <div>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Saldo Tersedia</p>
+                    <p id="wd-balance-display" class="text-2xl font-black mt-0.5">Rp 0</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-slate-400 text-[10px]">Min. Tarik</p>
+                    <p class="text-orange-400 font-bold text-sm">Rp 100.000</p>
+                </div>
+            </div>
+
+            <!-- Metode pembayaran -->
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Metode Penarikan</label>
+                <div class="grid grid-cols-2 gap-2" id="wd-method-grid">
+                    <button onclick="selectWdMethod('BCA','bank',this)"       class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">🏦 BCA</p><p class="text-[10px] text-slate-400">Bank Transfer</p>
+                    </button>
+                    <button onclick="selectWdMethod('Mandiri','bank',this)"   class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">🏦 Mandiri</p><p class="text-[10px] text-slate-400">Bank Transfer</p>
+                    </button>
+                    <button onclick="selectWdMethod('BRI','bank',this)"       class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">🏦 BRI</p><p class="text-[10px] text-slate-400">Bank Transfer</p>
+                    </button>
+                    <button onclick="selectWdMethod('BNI','bank',this)"       class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">🏦 BNI</p><p class="text-[10px] text-slate-400">Bank Transfer</p>
+                    </button>
+                    <button onclick="selectWdMethod('GoPay','ewallet',this)"  class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">💚 GoPay</p><p class="text-[10px] text-slate-400">E-Wallet</p>
+                    </button>
+                    <button onclick="selectWdMethod('OVO','ewallet',this)"    class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">💜 OVO</p><p class="text-[10px] text-slate-400">E-Wallet</p>
+                    </button>
+                    <button onclick="selectWdMethod('DANA','ewallet',this)"   class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">💙 DANA</p><p class="text-[10px] text-slate-400">E-Wallet</p>
+                    </button>
+                    <button onclick="selectWdMethod('ShopeePay','ewallet',this)" class="wd-method-btn py-3 px-4 rounded-2xl border-2 border-slate-200 text-left transition-all">
+                        <p class="font-extrabold text-slate-800 text-sm">🧡 ShopeePay</p><p class="text-[10px] text-slate-400">E-Wallet</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form detail rekening -->
+            <div id="wd-form" class="hidden space-y-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                        <span id="wd-account-label">Nomor Rekening</span>
+                    </label>
+                    <input id="wd-account" type="text" placeholder="Masukkan nomor rekening / no. HP"
+                        class="w-full p-3.5 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-orange-400 text-sm font-semibold">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nama Pemilik Rekening</label>
+                    <input id="wd-owner" type="text" placeholder="Nama sesuai rekening/akun"
+                        class="w-full p-3.5 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-orange-400 text-sm font-semibold">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jumlah Penarikan (Rp)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
+                        <input id="wd-amount" type="number" min="100000" placeholder="Min. 100.000"
+                            class="w-full pl-10 pr-4 py-3.5 bg-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-orange-400 text-sm font-bold">
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 ml-1">Minimal penarikan Rp 100.000</p>
+                </div>
+                <button onclick="submitWithdraw()" class="w-full bg-orange-500 text-white py-4 rounded-2xl font-extrabold text-sm mt-2"
+                    style="box-shadow:0 4px 0 #c2410c">
+                    Ajukan Penarikan →
+                </button>
+            </div>
+
+            <p class="text-[10px] text-slate-400 text-center leading-relaxed">
+                Penarikan diproses manual oleh admin dalam 1×24 jam kerja.
+            </p>
+        </div>
+        <div class="h-4"></div>
+    </div>
+</div>
+
+<!-- BulTok Game Full-Screen Modal -->
+<div id="bultok-modal" class="hidden fixed inset-0 z-[120] flex flex-col bg-black">
+    <div class="flex items-center justify-between px-5 py-3 bg-black border-b border-white/10">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#000"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+            </div>
+            <span class="text-white font-bold text-sm">BulTok Live Game</span>
+        </div>
+        <button onclick="closeGame('bultok')" class="flex items-center gap-1.5 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Tutup
+        </button>
+    </div>
+    <iframe id="bultok-frame" src="" class="flex-1 w-full border-none"></iframe>
+</div>
+
+<!-- MusicLive Game Full-Screen Modal -->
+<div id="musiklive-modal" class="hidden fixed inset-0 z-[120] flex flex-col bg-black">
+    <div class="flex items-center justify-between px-5 py-3 bg-black border-b border-white/10">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#7c3aed,#db2777)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </div>
+            <span class="text-white font-bold text-sm">MusicLive — Request Lagu</span>
+        </div>
+        <button onclick="closeGame('musiklive')" class="flex items-center gap-1.5 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Tutup
+        </button>
+    </div>
+    <iframe id="musiklive-frame" src="" class="flex-1 w-full border-none"></iframe>
+</div>
+
+<!-- PrintOK Game Full-Screen Modal -->
+<div id="printok-modal" class="hidden fixed inset-0 z-[120] flex flex-col bg-black">
+    <div class="flex items-center justify-between px-5 py-3 bg-black border-b border-white/10">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 bg-green-600 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            </div>
+            <span class="text-white font-bold text-sm">PrintOK — Tebak Kata</span>
+        </div>
+        <button onclick="closeGame('printok')" class="flex items-center gap-1.5 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            Tutup
+        </button>
+    </div>
+    <iframe id="printok-frame" src="" class="flex-1 w-full border-none"></iframe>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp }                                          from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+         onAuthStateChanged, signOut }
+                                                                  from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc,
+         onSnapshot, updateDoc, addDoc, collection }              from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDQSoNBnlWKSP5Qx3A9lu5XBBJevmtGGkI",
+    authDomain: "laci-222f3.firebaseapp.com",
+    databaseURL: "https://laci-222f3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "laci-222f3",
+    storageBucket: "laci-222f3.firebasestorage.app",
+    messagingSenderId: "827067069702",
+    appId: "1:827067069702:web:5f70051cc45995c5af1a87",
+    measurementId: "G-DMEF3TWSVL"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth  = getAuth(fbApp);
+const db    = getFirestore(fbApp);
+
+let currentUserData = null;
+let activePage      = 'home';
+let appSettings     = { referralCommission: 10000, packages: [], contacts: {} };
+
+// ── Load app settings from Firestore ────────────────────────────────────────
+async function loadAppSettings() {
+    try {
+        const snap = await getDoc(doc(db, 'settings', 'app'));
+        if (snap.exists()) appSettings = { ...appSettings, ...snap.data() };
+    } catch (_) {}
+    if (!appSettings.packages?.length) {
+        appSettings.packages = [
+            { name: 'Paket Bronze', desc: '1 Minggu',     days: 7,  price: 25000  },
+            { name: 'Paket Silver', desc: '2 Minggu',     days: 14, price: 50000  },
+            { name: 'Paket Gold',   desc: '1 Bulan Full', days: 30, price: 100000 }
+        ];
+    }
+    if (!appSettings.contacts?.whatsapp) {
+        appSettings.contacts = { whatsapp: '6283872543597', telegram: '@altomediaindonesia' };
+    }
+}
+loadAppSettings();
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+window.showToast = (msg) => {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('opacity-0', '-translate-y-4');
+    t.classList.add('opacity-100', 'translate-y-0');
+    setTimeout(() => {
+        t.classList.add('opacity-0', '-translate-y-4');
+        t.classList.remove('opacity-100', 'translate-y-0');
+    }, 3000);
+};
+
+window.toggleLoading = (s) => document.getElementById('loading-overlay').classList.toggle('hidden', !s);
+window.closeModal    = (id) => document.getElementById(id).classList.add('hidden');
+
+window.toggleAuthMode = () => {
+    document.getElementById('login-form').classList.toggle('hidden');
+    document.getElementById('register-form').classList.toggle('hidden');
+    document.getElementById('auth-title').textContent =
+        document.getElementById('login-form').classList.contains('hidden')
+            ? 'Buat akun baru' : 'Masuk ke akun Anda';
+};
+
+function formatIDR(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+function isPackageActive() {
+    return currentUserData?.activePackageUntil
+        && new Date(currentUserData.activePackageUntil) > new Date();
+}
+
+// ── Router ─────────────────────────────────────────────────────────────────
+window.router = (page) => {
+    activePage = page;
+    const content = document.getElementById('app-content');
+    content.classList.remove('page-transition');
+    void content.offsetWidth;
+    content.classList.add('page-transition');
+    document.querySelectorAll('.nav-item').forEach(b => {
+        b.classList.remove('active-nav'); b.classList.add('text-slate-400');
+    });
+    const nav = document.getElementById(`nav-${page}`);
+    if (nav) { nav.classList.add('active-nav'); nav.classList.remove('text-slate-400'); }
+    renderPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ── Pages ──────────────────────────────────────────────────────────────────
+function renderPage(page) {
+    const c = document.getElementById('app-content');
+    let html = '';
+    switch (page) {
+
+        // HOME
+        case 'home': html = `
+            <div class="space-y-5">
+                <div class="game-banner-1 p-7 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300">Platform TikTok Live</span>
+                        <h2 class="text-4xl font-extrabold mt-1 tracking-tight">ALTOMUS</h2>
+                        <p class="text-blue-200 text-xs leading-relaxed mt-2 max-w-[220px]">Game interaktif live streaming TikTok yang terhubung langsung dengan penonton.</p>
+                        <button onclick="router('game')" class="mt-5 btn-primary bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold text-sm inline-flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Main Sekarang
+                        </button>
+                    </div>
+                    <div class="absolute -top-8 -right-8 opacity-10">
+                        <svg width="140" height="140" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-60"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2.5"><path d="m13 2-2 2.5h3L12 7"/><path d="M12 22v-3"/><path d="M10 20H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="m17 13 2 2 4-4"/></svg>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-sm">Interaktif</h4>
+                        <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Terhubung langsung ke aksi penonton live.</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                        <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-sm">Mudah</h4>
+                        <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Aktivasi cepat oleh tim Admin.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-slate-800 text-sm">Status Paket</h4>
+                        ${isPackageActive()
+                            ? '<span class="bg-green-100 text-green-600 text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Aktif</span>'
+                            : '<span class="bg-red-100 text-red-500 text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>'}
+                    </div>
+                    ${isPackageActive()
+                        ? `<p class="text-[11px] text-slate-400">Aktif hingga: <span class="font-bold text-slate-700">${new Date(currentUserData.activePackageUntil).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</span></p>`
+                        : `<p class="text-[11px] text-slate-400">Belum ada paket aktif. <button onclick="router('paket')" class="text-blue-600 font-bold">Beli paket →</button></p>`}
+                </div>
+            </div>`; break;
+
+        // PAKET — dinamis dari Firestore
+        case 'paket': html = `
+            <div class="space-y-4">
+                <div class="px-1">
+                    <h3 class="text-xl font-extrabold text-slate-800">Pilih Paket</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Aktifkan akses ke semua game ALTOMUS</p>
+                </div>
+                <div id="paket-list" class="space-y-3">
+                    <div class="text-center text-slate-400 text-sm py-6">Memuat paket…</div>
+                </div>
+            </div>`; 
+            setTimeout(loadPaketList, 50);
+            break;
+
+        // GAME
+        case 'game': html = `
+            <div class="space-y-5">
+                <div class="flex items-center justify-between px-1">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-800">Pilih Game</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Butuh paket aktif untuk bermain</p>
+                    </div>
+                    ${isPackageActive()
+                        ? '<span class="bg-green-100 text-green-600 text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span>Paket Aktif</span>'
+                        : '<span class="bg-red-100 text-red-500 text-[9px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>'}
+                </div>
+
+                <!-- CARD 1: BulTok Live Game -->
+                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="game-banner-1 h-36 relative flex items-center justify-center overflow-hidden">
+                        <div class="float-anim">
+                            <svg width="72" height="72" viewBox="0 0 24 24" fill="white" opacity="0.95"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
+                        </div>
+                        <div class="absolute top-3 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                            <span class="text-white text-[10px] font-bold uppercase tracking-wider">Game #1</span>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500"></div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex items-start justify-between mb-1">
+                            <h4 class="font-extrabold text-slate-800 text-base">BulTok Live Game</h4>
+                            <span class="bg-blue-100 text-blue-600 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase mt-0.5">Live</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mb-4">Game interaktif TikTok Live dengan efek suara, foto melayang, dan reaksi real-time dari penonton.</p>
+                        <div class="flex gap-3 text-[10px] text-slate-400 mb-4">
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Real-time</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> Efek Suara</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Multi-user</span>
+                        </div>
+                        <button onclick="playGame('bultok')" class="btn-dark w-full bg-slate-900 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Mainkan Sekarang
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD 2: PrintOK -->
+                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="game-banner-2 h-36 relative flex items-center justify-center overflow-hidden">
+                        <div class="float-anim">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" opacity="0.95"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                        </div>
+                        <div class="absolute top-3 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                            <span class="text-white text-[10px] font-bold uppercase tracking-wider">Game #2</span>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 to-green-400"></div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex items-start justify-between mb-1">
+                            <h4 class="font-extrabold text-slate-800 text-base">PrintOK — Tebak Kata</h4>
+                            <span class="bg-green-100 text-green-600 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase mt-0.5">Live</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mb-4">Penonton menebak kata tersembunyi lewat komentar live — yang benar foto profilnya tercetak di printer virtual!</p>
+                        <div class="flex gap-3 text-[10px] text-slate-400 mb-4">
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg> Printer Virtual</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Komentar Live</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg> Pemenang</span>
+                        </div>
+                        <button onclick="playGame('printok')" class="btn-green w-full bg-green-600 text-white py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Mainkan Sekarang
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD 3: MusicLive -->
+                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="game-banner-3 h-36 relative flex items-center justify-center overflow-hidden">
+                        <div class="float-anim">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" opacity="0.95"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        </div>
+                        <div class="absolute top-3 left-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                            <span class="text-white text-[10px] font-bold uppercase tracking-wider">Game #3</span>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+                    </div>
+                    <div class="p-5">
+                        <div class="flex items-start justify-between mb-1">
+                            <h4 class="font-extrabold text-slate-800 text-base">MusicLive — Request Lagu</h4>
+                            <span class="bg-purple-100 text-purple-600 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase mt-0.5">Live</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mb-4">Penonton ketik angka di komentar live untuk request lagu — 39 lagu siap diputar langsung!</p>
+                        <div class="flex gap-3 text-[10px] text-slate-400 mb-4">
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg> 39 Lagu</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Request Live</span>
+                            <span class="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Auto-play</span>
+                        </div>
+                        <button onclick="playGame('musiklive')" class="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 text-white" style="background:linear-gradient(135deg,#7c3aed,#db2777)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Mainkan Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>`; break;
+
+        // SALDO
+        case 'saldo': html = `
+            <div class="space-y-5">
+                <div class="bg-slate-900 p-7 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full -translate-y-10 translate-x-10 blur-3xl"></div>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Saldo Anda</p>
+                    <h2 class="text-4xl font-black mt-1 tracking-tight">Rp ${formatIDR(currentUserData?.balance || 0)}</h2>
+                    <p class="text-slate-500 text-xs mt-1">Kode Referral: <span class="text-slate-300 font-bold">${currentUserData?.referralCode || '—'}</span></p>
+                    <div class="mt-6 flex gap-3">
+                        <button onclick="initTopup()" class="btn-primary bg-blue-600 px-5 py-3 rounded-2xl font-bold text-sm flex-1 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Top Up QRIS
+                        </button>
+                        <button onclick="initWithdraw()" class="bg-slate-700 text-white px-5 py-3 rounded-2xl font-bold text-sm flex-1 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            Tarik
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-3xl border border-orange-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center text-white text-base">🔥</div>
+                        <h4 class="font-extrabold text-orange-800">Program Referral</h4>
+                    </div>
+                    <p class="text-[11px] text-orange-600 leading-relaxed mb-4">Dapatkan bonus <b>Rp ${formatIDR(appSettings.referralCommission || 10000)}</b> untuk setiap teman yang mendaftar & membeli paket menggunakan kode Anda.</p>
+                    <div class="flex gap-2">
+                        <div class="bg-white border-2 border-orange-200 rounded-xl px-4 py-2.5 text-orange-700 font-bold text-xs flex-1 select-all">${currentUserData?.referralCode || 'ALT-XXXX'}</div>
+                        <button onclick="copyReferral()" class="btn-green bg-green-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs">Salin</button>
+                    </div>
+                </div>
+            </div>`; break;
+
+        // PROFIL
+        case 'profil': html = `
+            <div class="space-y-5">
+                <div class="flex items-center gap-4 bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl uppercase shadow-lg">
+                        ${currentUserData?.name?.charAt(0) || '?'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-extrabold text-slate-800 text-base truncate">${currentUserData?.name || 'User'}</h4>
+                        <p class="text-xs text-slate-400">${currentUserData?.phone || '08xxx'}</p>
+                        <p class="text-[10px] mt-0.5 ${isPackageActive() ? 'text-green-600 font-bold' : 'text-red-400 font-bold'}">${isPackageActive() ? '✓ Paket Aktif' : '✗ Paket Nonaktif'}</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden divide-y divide-slate-50 shadow-sm">
+                    <a href="https://t.me/altomediaindonesia" target="_blank" class="p-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.088 13.62l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.834.939h.026z"/></svg>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">Telegram Support</span>
+                        </div>
+                        <span class="text-xs text-slate-400">@altomediaindonesia</span>
+                    </a>
+                    <a id="wa-link" href="https://wa.me/${appSettings.contacts?.whatsapp||'6283872543597'}" target="_blank" class="p-5 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="#22c55e"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm.029 18.88a9.856 9.856 0 0 1-4.79-1.246l-3.448.903.922-3.368a9.849 9.849 0 0 1-1.317-4.944c.002-5.45 4.436-9.884 9.883-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.931 9.884z"/></svg>
+                            </div>
+                            <span class="text-sm font-semibold text-slate-700">WhatsApp Support</span>
+                        </div>
+                        <span id="wa-num-display" class="text-xs text-slate-400">+${appSettings.contacts?.whatsapp||'6283872543597'}</span>
+                    </a>
+                    <a href="/admin.html" class="${currentUserData?.isAdmin ? '' : 'hidden'} w-full p-5 flex justify-between items-center text-red-600 font-bold bg-red-50 hover:bg-red-100 transition-colors">
+                        <span class="flex items-center gap-2 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Panel Admin
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+                    </a>
+                    <button onclick="handleLogout()" class="w-full p-5 flex justify-between items-center text-slate-400 font-bold hover:bg-slate-50 transition-colors">
+                        <span class="flex items-center gap-2 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                            Keluar Akun
+                        </span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                </div>
+            </div>`; break;
+
+        // ADMIN — redirect ke halaman terpisah
+        case 'admin':
+            if (!currentUserData?.isAdmin) { router('home'); return; }
+            window.location.href = '/admin.html';
+            return;
+    }
+    c.innerHTML = html;
+}
+
+// ── Game launcher ──────────────────────────────────────────────────────────
+window.playGame = (key) => {
+    if (!isPackageActive()) {
+        showToast("Wajib punya paket aktif untuk bermain!");
+        setTimeout(() => router('paket'), 1000);
+        return;
+    }
+    if (key === 'bultok') {
+        const modal = document.getElementById('bultok-modal');
+        const frame = document.getElementById('bultok-frame');
+        frame.src = '/bultok.html';
+        modal.classList.remove('hidden');
+    } else if (key === 'printok') {
+        const modal = document.getElementById('printok-modal');
+        const frame = document.getElementById('printok-frame');
+        frame.src = '/printok/game.html';
+        modal.classList.remove('hidden');
+    } else if (key === 'musiklive') {
+        const modal = document.getElementById('musiklive-modal');
+        const frame = document.getElementById('musiklive-frame');
+        frame.src = '/musiklive/game.html';
+        modal.classList.remove('hidden');
+    }
+};
+
+window.closeGame = (key) => {
+    if (!key || key === 'bultok') {
+        const modal = document.getElementById('bultok-modal');
+        const frame = document.getElementById('bultok-frame');
+        modal.classList.add('hidden');
+        frame.src = '';
+    }
+    if (!key || key === 'printok') {
+        const modal = document.getElementById('printok-modal');
+        const frame = document.getElementById('printok-frame');
+        modal.classList.add('hidden');
+        frame.src = '';
+    }
+    if (!key || key === 'musiklive') {
+        const modal = document.getElementById('musiklive-modal');
+        const frame = document.getElementById('musiklive-frame');
+        modal.classList.add('hidden');
+        frame.src = '';
+    }
+};
+
+// ── QRIS Engine ────────────────────────────────────────────────────────────
+const QRIS_BASE = "00020101021126610014COM.GO-JEK.WWW01189360091439663050810210G9663050810303UMI51440014ID.CO.QRIS.WWW0215ID10254671365660303UMI5204549953033605802ID5917ALTOMEDIA, Grosir6008KARAWANG61054136162070703A016304D21A";
+let qrisTimerInterval = null;
+let qrisMode  = 'paket';  // 'paket' | 'topup'
+let qrisAmount = 0;
+let qrisSelectedBtn = null;
+
+function crc16(data) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < data.length; i++) {
+        crc ^= data.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+        }
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+}
+
+function buildQris(amount) {
+    const amt    = String(amount);
+    const base   = QRIS_BASE.split("6304")[0];
+    const tag    = "54" + amt.length.toString().padStart(2, '0') + amt;
+    const raw    = base + tag + "6304";
+    return raw + crc16(raw);
+}
+
+function renderQris(amount) {
+    const qrEl = document.getElementById('qris-qrcode');
+    qrEl.innerHTML = '';
+    new QRCode(qrEl, { text: buildQris(amount), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+    document.getElementById('qris-total-display').textContent = 'Rp ' + formatIDR(amount);
+    document.getElementById('qris-trx-id').textContent = 'TRX-' + Math.floor(Date.now()/1000);
+    document.getElementById('qris-result').classList.remove('hidden');
+    startQrisTimer();
+}
+
+function startQrisTimer() {
+    clearInterval(qrisTimerInterval);
+    let time = 180;
+    const el = document.getElementById('qris-timer');
+    qrisTimerInterval = setInterval(() => {
+        const m = Math.floor(time / 60), s = time % 60;
+        el.textContent = `Selesaikan dalam ${m}:${s < 10 ? '0' : ''}${s}`;
+        if (--time < 0) {
+            clearInterval(qrisTimerInterval);
+            el.textContent = '⏰ Waktu habis — buat QRIS baru';
+            document.getElementById('qris-result').style.opacity = '0.45';
+        }
+    }, 1000);
+}
+
+window.setQrisNominal = (val, btn) => {
+    qrisAmount = val;
+    document.getElementById('qris-custom-amount').value = '';
+    document.querySelectorAll('.btn-nominal').forEach(b => {
+        b.classList.remove('bg-blue-600','text-white','border-blue-600');
+        b.classList.add('bg-slate-100','text-slate-700','border-transparent');
+    });
+    btn.classList.add('bg-blue-600','text-white','border-blue-600');
+    btn.classList.remove('bg-slate-100','text-slate-700','border-transparent');
+};
+
+window.onCustomAmount = (inp) => {
+    qrisAmount = parseInt(inp.value) || 0;
+    document.querySelectorAll('.btn-nominal').forEach(b => {
+        b.classList.remove('bg-blue-600','text-white','border-blue-600');
+        b.classList.add('bg-slate-100','text-slate-700','border-transparent');
+    });
+};
+
+window.doGenerateQris = () => {
+    if (!qrisAmount || qrisAmount < 10000) {
+        showToast('Minimal topup Rp 10.000!'); return;
+    }
+    document.getElementById('qris-result').style.opacity = '1';
+    renderQris(qrisAmount);
+};
+
+window.closeQrisModal = () => {
+    clearInterval(qrisTimerInterval);
+    document.getElementById('qris-modal').classList.add('hidden');
+    document.getElementById('qris-result').classList.add('hidden');
+    document.getElementById('qris-result').style.opacity = '1';
+    document.getElementById('qris-nominal-picker').classList.add('hidden');
+    document.querySelectorAll('.btn-nominal').forEach(b => {
+        b.classList.remove('bg-blue-600','text-white','border-blue-600');
+        b.classList.add('bg-slate-100','text-slate-700','border-transparent');
+    });
+};
+
+window.downloadQris = () => {
+    html2canvas(document.getElementById('qris-capture'), { scale: 3, useCORS: true }).then(canvas => {
+        const a = document.createElement('a');
+        a.download = `QRIS-ALTOMUS-${Date.now()}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    });
+};
+
+// ── Purchase (beli paket) ───────────────────────────────────────────────────
+window.initPurchase = (title, price, days) => {
+    if (!currentUserData || !auth.currentUser) {
+        showToast("Login terlebih dahulu!"); router('profil'); return;
+    }
+    window.currentTx = { title, price, days };
+    qrisMode   = 'paket';
+    qrisAmount = price;
+
+    document.getElementById('qris-mode-label').textContent = 'Pembayaran Paket';
+    document.getElementById('qris-title').textContent      = title;
+    document.getElementById('qris-nominal-picker').classList.add('hidden');
+    document.getElementById('qris-result').style.opacity   = '1';
+
+    document.getElementById('qris-modal').classList.remove('hidden');
+    setTimeout(() => renderQris(price), 80);
+};
+
+// ── TopUp saldo ─────────────────────────────────────────────────────────────
+window.initTopup = () => {
+    if (!currentUserData || !auth.currentUser) {
+        showToast("Login terlebih dahulu!"); router('profil'); return;
+    }
+    qrisMode   = 'topup';
+    qrisAmount = 0;
+
+    document.getElementById('qris-mode-label').textContent = 'Top Up Saldo';
+    document.getElementById('qris-title').textContent      = 'Pilih Nominal';
+    document.getElementById('qris-nominal-picker').classList.remove('hidden');
+    document.getElementById('qris-result').classList.add('hidden');
+    document.getElementById('qris-custom-amount').value    = '';
+
+    document.getElementById('qris-modal').classList.remove('hidden');
+};
+
+// ── Konfirmasi sudah bayar ─────────────────────────────────────────────────
+window.confirmQrisPayment = async () => {
+    if (!auth.currentUser) return;
+    toggleLoading(true);
+    try {
+        const waNum = appSettings.contacts?.whatsapp || '6283872543597';
+        if (qrisMode === 'paket' && window.currentTx) {
+            await addDoc(collection(db, 'transactions'), {
+                uid:      auth.currentUser.uid,
+                phone:    currentUserData.phone,
+                name:     currentUserData.name,
+                package:  window.currentTx.title,
+                price:    window.currentTx.price,
+                days:     window.currentTx.days,
+                status:   'pending',
+                createdAt: new Date().toISOString()
+            });
+            const msg = `Konfirmasi bayar ${window.currentTx.title} Rp${formatIDR(window.currentTx.price)} a/n ${currentUserData.name} (${currentUserData.phone}).`;
+            window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+            showToast("✅ Pembayaran dikonfirmasi, tunggu aktivasi admin!");
+        } else if (qrisMode === 'topup') {
+            await addDoc(collection(db, 'topups'), {
+                uid:      auth.currentUser.uid,
+                phone:    currentUserData.phone,
+                name:     currentUserData.name,
+                amount:   qrisAmount,
+                note:     'QRIS ALTOMEDIA',
+                status:   'pending',
+                createdAt: new Date().toISOString()
+            });
+            const msg = `Konfirmasi topup saldo Rp${formatIDR(qrisAmount)} a/n ${currentUserData.name} (${currentUserData.phone}).`;
+            window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+            showToast("✅ Topup dikonfirmasi, tunggu disetujui admin!");
+        }
+        closeQrisModal();
+    } catch (e) { console.error(e); showToast("Gagal memproses, coba lagi."); }
+    toggleLoading(false);
+};
+
+// ── Withdraw (Tarik Saldo) ──────────────────────────────────────────────────
+let wdMethod = '';
+let wdType   = '';
+
+window.initWithdraw = () => {
+    if (!currentUserData || !auth.currentUser) {
+        showToast("Login terlebih dahulu!"); router('profil'); return;
+    }
+    document.getElementById('wd-balance-display').textContent = 'Rp ' + formatIDR(currentUserData.balance || 0);
+    document.getElementById('wd-form').classList.add('hidden');
+    document.getElementById('wd-account').value = '';
+    document.getElementById('wd-owner').value   = '';
+    document.getElementById('wd-amount').value  = '';
+    document.querySelectorAll('.wd-method-btn').forEach(b => {
+        b.classList.remove('border-orange-500','bg-orange-50');
+        b.classList.add('border-slate-200');
+    });
+    wdMethod = ''; wdType = '';
+    document.getElementById('withdraw-modal').classList.remove('hidden');
+};
+
+window.selectWdMethod = (method, type, btn) => {
+    wdMethod = method; wdType = type;
+    document.querySelectorAll('.wd-method-btn').forEach(b => {
+        b.classList.remove('border-orange-500','bg-orange-50');
+        b.classList.add('border-slate-200');
+    });
+    btn.classList.add('border-orange-500','bg-orange-50');
+    btn.classList.remove('border-slate-200');
+    document.getElementById('wd-account-label').textContent =
+        type === 'bank' ? 'Nomor Rekening' : 'Nomor HP / ID Akun';
+    document.getElementById('wd-form').classList.remove('hidden');
+};
+
+window.submitWithdraw = async () => {
+    if (!wdMethod) { showToast('Pilih metode penarikan dulu!'); return; }
+    const account = document.getElementById('wd-account').value.trim();
+    const owner   = document.getElementById('wd-owner').value.trim();
+    const amount  = parseInt(document.getElementById('wd-amount').value) || 0;
+    if (!account) { showToast('Masukkan nomor rekening / akun!'); return; }
+    if (!owner)   { showToast('Masukkan nama pemilik rekening!'); return; }
+    if (amount < 100000) { showToast('Minimal penarikan Rp 100.000!'); return; }
+    if (amount > (currentUserData.balance || 0)) { showToast('Saldo tidak cukup!'); return; }
+
+    toggleLoading(true);
+    try {
+        await addDoc(collection(db, 'withdrawals'), {
+            uid:      auth.currentUser.uid,
+            name:     currentUserData.name,
+            phone:    currentUserData.phone,
+            method:   wdMethod,
+            type:     wdType,
+            account, owner, amount,
+            status:   'pending',
+            createdAt: new Date().toISOString()
+        });
+        document.getElementById('withdraw-modal').classList.add('hidden');
+        const waNum = appSettings.contacts?.whatsapp || '6283872543597';
+        const msg = `Permohonan tarik saldo ALTOMUS:\nNama: ${currentUserData.name}\nHP: ${currentUserData.phone}\nMetode: ${wdMethod}\nRekening/Akun: ${account}\nA/N: ${owner}\nJumlah: Rp ${formatIDR(amount)}`;
+        window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+        showToast('✅ Permintaan tarik saldo terkirim!');
+    } catch (e) { console.error(e); showToast('Gagal mengirim permintaan.'); }
+    toggleLoading(false);
+};
+
+window.copyReferral = () => {
+    const code = currentUserData?.referralCode || '';
+    navigator.clipboard?.writeText(code).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = code; document.body.appendChild(el); el.select();
+        document.execCommand('copy'); document.body.removeChild(el);
+    });
+    showToast("Kode referral disalin!");
+};
+
+// ── Paket (dinamis dari Firestore) ──────────────────────────────────────────
+const PAKET_COLORS = [
+    { text:"#92400e", bg:"#fef3c7", accent:"#d97706" },
+    { text:"#334155", bg:"#f1f5f9", accent:"#64748b" },
+    { text:"#713f12", bg:"#fefce8", accent:"#ca8a04" },
+    { text:"#1e3a5f", bg:"#dbeafe", accent:"#3b82f6" },
+    { text:"#3b0764", bg:"#f5f3ff", accent:"#7c3aed" },
+];
+window.loadPaketList = async () => {
+    const el = document.getElementById('paket-list');
+    if (!el) return;
+    await loadAppSettings();
+    const pkgs = appSettings.packages || [];
+    if (!pkgs.length) {
+        el.innerHTML = '<div class="text-center text-slate-400 text-sm py-8">Belum ada paket tersedia.</div>';
+        return;
+    }
+    el.innerHTML = pkgs.map((p, i) => {
+        const c = PAKET_COLORS[i % PAKET_COLORS.length];
+        return pkCard(p.name, p.desc, p.days, p.price, c.text, c.bg, c.accent);
+    }).join('');
+};
+
+function pkCard(name, desc, days, price, textC, bgC, accentC) {
+    const iR = formatIDR(price);
+    return `
+    <div class="rounded-[1.75rem] p-5 relative overflow-hidden" style="background:${bgC}">
+        <div class="absolute top-0 right-0 w-28 h-28 rounded-full opacity-20 -translate-y-6 translate-x-6" style="background:${accentC}"></div>
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="font-extrabold text-base" style="color:${textC}">${name}</p>
+                <p class="text-xs mt-0.5 font-semibold" style="color:${accentC}">${desc} · ${days} hari</p>
+            </div>
+            <div class="text-right">
+                <p class="font-black text-xl" style="color:${textC}">Rp ${iR}</p>
+                <p class="text-[9px] font-bold uppercase tracking-wider" style="color:${accentC}">Sekali bayar</p>
+            </div>
+        </div>
+        <button onclick="initPurchase('${name}',${price},${days})"
+            class="mt-4 w-full py-3 rounded-2xl font-bold text-sm text-white"
+            style="background:${textC}">
+            Beli Paket Ini →
+        </button>
+    </div>`;
+}
+
+// ── Auth forms ─────────────────────────────────────────────────────────────
+document.getElementById('login-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('login-phone').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    toggleLoading(true);
+    try {
+        const email = `${phone}@altomus.app`;
+        await signInWithEmailAndPassword(auth, email, pass);
+        showToast("Login berhasil!");
+    } catch (err) {
+        console.error("Login error:", err.code, err.message);
+        showToast("Login gagal. Cek nomor & kata sandi.");
+    } finally {
+        toggleLoading(false);
+    }
+};
+
+document.getElementById('register-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const name  = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const pass  = document.getElementById('reg-pass').value;
+    const ref   = document.getElementById('reg-ref').value.trim();
+    toggleLoading(true);
+    try {
+        const cred = await createUserWithEmailAndPassword(auth, `${phone}@altomus.app`, pass);
+        const uid  = cred.user.uid;
+        const myRef = "ALT-" + Math.random().toString(36).substring(7).toUpperCase();
+        await setDoc(doc(db, 'users', uid), {
+            name, phone, balance: 0, referralCode: myRef,
+            referredBy: ref || null, activePackageUntil: null, isAdmin: false, uid
+        });
+        showToast("Akun berhasil dibuat!");
+    } catch (err) {
+        console.error("Register error:", err.code, err.message);
+        if (err.code === 'auth/email-already-in-use') {
+            showToast("Nomor HP sudah terdaftar.");
+        } else {
+            showToast("Gagal daftar: " + (err.message || err.code));
+        }
+    } finally {
+        toggleLoading(false);
+    }
+};
+
+window.handleLogout = async () => {
+    toggleLoading(true);
+    try {
+        await signOut(auth);
+    } finally {
+        toggleLoading(false);
+    }
+};
+
+// ── Auth state ─────────────────────────────────────────────────────────────
+function applyUserData(data) {
+    currentUserData = data;
+    document.getElementById('display-name').textContent = data.name || 'User';
+    document.getElementById('display-balance').textContent = `Rp ${formatIDR(data.balance || 0)}`;
+    document.getElementById('admin-badge').classList.toggle('hidden', !data.isAdmin);
+    if (data.isAdmin) {
+        window.location.replace('/admin.html');
+        return;
+    }
+    router(activePage);
+}
+
+let profileUnsub = null;
+onAuthStateChanged(auth, async (user) => {
+    const screen = document.getElementById('auth-screen');
+    if (profileUnsub) { profileUnsub(); profileUnsub = null; }
+
+    if (user) {
+        screen.classList.add('hidden');
+
+        const profileRef = doc(db, 'users', user.uid);
+
+        const ADMIN_PHONE = "085813899649";
+        const phoneFromEmail = user.email ? user.email.replace('@altomus.app', '') : '';
+        const isAdminPhone  = phoneFromEmail === ADMIN_PHONE;
+
+        try {
+            const snap = await getDoc(profileRef);
+            if (snap.exists()) {
+                const data = snap.data();
+                if (isAdminPhone && !data.isAdmin) {
+                    data.isAdmin = true;
+                    try { await updateDoc(profileRef, { isAdmin: true }); } catch (_) {}
+                }
+                applyUserData(data);
+            } else {
+                const adminData = isAdminPhone
+                    ? { name: "Admin ALTOMUS", phone: ADMIN_PHONE, isAdmin: true, balance: 0, referralCode: 'ADMIN-CORE', uid: user.uid }
+                    : { name: phoneFromEmail || 'User', phone: phoneFromEmail, balance: 0, isAdmin: false, uid: user.uid };
+                try { await setDoc(profileRef, adminData); } catch (_) {}
+                applyUserData(adminData);
+            }
+        } catch (err) {
+            console.error("Firestore getDoc error:", err.code, err.message);
+            const fallback = isAdminPhone
+                ? { name: "Admin ALTOMUS", phone: ADMIN_PHONE, balance: 0, isAdmin: true }
+                : { name: phoneFromEmail || 'User', phone: phoneFromEmail, balance: 0, isAdmin: false };
+            applyUserData(fallback);
+        }
+
+        profileUnsub = onSnapshot(profileRef,
+            (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (isAdminPhone) data.isAdmin = true;
+                    applyUserData(data);
+                }
+            },
+            (err) => { console.error("Firestore onSnapshot error:", err.code, err.message); }
+        );
+    } else {
+        screen.classList.remove('hidden');
+        currentUserData = null;
+        document.getElementById('display-name').textContent = 'Guest';
+        document.getElementById('display-balance').textContent = 'Rp 0';
+        document.getElementById('admin-badge').classList.add('hidden');
+    }
+});
+
+window.onload = () => router('home');
+</script>
+</body>
+</html>
