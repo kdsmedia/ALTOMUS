@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicLive — ALTOMUS Game #3</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background: #0a0a0a url('bg/bg0.jpeg') center/cover no-repeat fixed;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── Status badge ── */
+        #statusBadge {
+            position: fixed;
+            top: 14px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.72);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 6px 18px;
+            border-radius: 99px;
+            backdrop-filter: blur(10px);
+            z-index: 500;
+            max-width: 90vw;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* ── Now Playing ── */
+        #nowPlaying {
+            position: fixed;
+            top: 56px; left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(29,78,216,0.92), rgba(109,40,217,0.92));
+            color: #fff;
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 9px 22px;
+            border-radius: 99px;
+            backdrop-filter: blur(10px);
+            z-index: 500;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+            animation: fadeInDown 0.3s ease;
+            white-space: nowrap;
+        }
+        @keyframes fadeInDown {
+            from { opacity:0; transform:translateX(-50%) translateY(-10px); }
+            to   { opacity:1; transform:translateX(-50%) translateY(0); }
+        }
+
+        /* ── EQ animation ── */
+        .eq-anim { display:flex; gap:3px; align-items:flex-end; }
+        .eq-anim span {
+            width:4px; background:#93c5fd; border-radius:2px;
+            animation: eq 0.7s infinite alternate;
+        }
+        .eq-anim span:nth-child(2) { animation-delay:0.15s; }
+        .eq-anim span:nth-child(3) { animation-delay:0.3s; }
+        @keyframes eq { from{height:4px} to{height:18px} }
+
+        /* ── Queue indicator ── */
+        #queueBadge {
+            position: fixed;
+            top: 56px; right: 14px;
+            background: rgba(0,0,0,0.7);
+            color: #93c5fd;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 99px;
+            z-index: 500;
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        /* ── Song list overlay ── */
+        #songList {
+            position: fixed;
+            bottom: 80px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 12px 18px;
+            z-index: 500;
+            max-width: 94vw;
+            text-align: center;
+            font-size: 0.7rem;
+            line-height: 1.9;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        #songList strong { font-size: 0.78rem; display:block; margin-bottom:4px; color:#93c5fd; }
+
+        /* ── Settings button ── */
+        #settingsButton {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 52px; height: 52px;
+            font-size: 22px;
+            display: flex; align-items:center; justify-content:center;
+            cursor: pointer;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            transition: background 0.2s, transform 0.2s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        #settingsButton:hover { background:rgba(29,78,216,0.8); transform:scale(1.08); }
+
+        /* ── Overlay & Popup ── */
+        #overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+        #settingsPopup {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border-radius: 20px;
+            padding: 26px 22px 18px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            z-index: 10000;
+            width: 330px; max-width: 94vw;
+        }
+        #settingsPopup h2 {
+            font-size: 1.1rem; font-weight: 800;
+            margin-bottom: 16px; color: #0f172a;
+        }
+        .field-label {
+            font-size: 0.75rem; color: #64748b;
+            display: block; margin-bottom: 4px; font-weight: 600;
+        }
+        .popup-input {
+            width: 100%; padding: 10px 12px;
+            margin-bottom: 12px;
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            font-size: 0.9rem; outline: none;
+            transition: border-color 0.2s; background: #f8fafc;
+            color: #0f172a;
+        }
+        .popup-input:focus { border-color: #3b82f6; background: #fff; }
+        .popup-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+        .popup-row input[type=range] { flex:1; accent-color:#3b82f6; }
+        .popup-row input[type=checkbox] { width:17px; height:17px; cursor:pointer; accent-color:#3b82f6; }
+        .popup-row label { font-size:0.82rem; color:#475569; margin:0; cursor:pointer; }
+        .btn-connect {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg,#1d4ed8,#6d28d9);
+            color: #fff; border: none; border-radius: 12px;
+            font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; margin-top: 4px;
+            transition: opacity 0.2s;
+        }
+        .btn-connect:hover { opacity: 0.9; }
+        .btn-close {
+            width: 100%; padding: 10px;
+            background: #f1f5f9; color: #64748b;
+            border: none; border-radius: 12px;
+            font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; margin-top: 8px;
+        }
+        .btn-close:hover { background: #e2e8f0; }
+
+        /* ── Floating / Big Photo ── */
+        .floating-photo {
+            position: absolute;
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #4ade80;
+            box-shadow: 0 0 14px rgba(74,222,128,0.6);
+            pointer-events: none;
+            z-index: 1000;
+            transition: left 0.5s ease, top 0.5s ease, opacity 0.8s ease;
+        }
+        .big-photo {
+            position: fixed;
+            width: 210px; height: 210px;
+            border-radius: 50%; object-fit: cover;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 6px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 50px rgba(0,0,0,0.7), 0 0 0 3px #3b82f6;
+            z-index: 2000;
+            animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes popIn {
+            from { transform:translate(-50%,-50%) scale(0.4); opacity:0; }
+            to   { transform:translate(-50%,-50%) scale(1);   opacity:1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Status -->
+    <div id="statusBadge">🎵 MusicLive — Ketuk ⚙️ untuk hubungkan TikTok</div>
+
+    <!-- Now Playing -->
+    <div id="nowPlaying">
+        <div class="eq-anim"><span></span><span></span><span></span></div>
+        <span id="nowPlayingText">Lagu #1</span>
+    </div>
+
+    <!-- Queue badge -->
+    <div id="queueBadge">📋 <span id="queueCount">0</span> antrian</div>
+
+    <!-- Song list guide -->
+    <div id="songList">
+        <strong>🎵 Daftar Lagu — ketik angka di komentar TikTok</strong>
+        <span>0–39 request lagu &nbsp;·&nbsp; "king" = stop &nbsp;·&nbsp; "fyp" = telolet &nbsp;·&nbsp; "ganti" = skip</span>
+    </div>
+
+    <!-- Settings button -->
+    <button id="settingsButton" title="Pengaturan">⚙️</button>
+
+    <!-- Overlay -->
+    <div id="overlay"></div>
+
+    <!-- Settings Popup -->
+    <div id="settingsPopup">
+        <h2>⚙️ Pengaturan MusicLive</h2>
+
+        <label class="field-label">Username TikTok</label>
+        <input type="text" id="usernameInput" class="popup-input" placeholder="username (tanpa @)" />
+
+        <label class="field-label">Background</label>
+        <select id="backgroundSelect" class="popup-input" style="margin-bottom:10px;">
+            <option value="bg/bg0.jpeg">Default</option>
+            <option value="bg/bg1.jpeg">BG 1</option>
+            <option value="bg/bg2.png">BG 2</option>
+            <option value="bg/bg3.jpg">BG 3</option>
+            <option value="bg/bg4.jpeg">BG 4</option>
+            <option value="bg/bg5.jpg">BG 5</option>
+            <option value="bg/bg6.jpg">BG 6</option>
+            <option value="bg/bg7.jpg">BG 7</option>
+            <option value="bg/bg8.jpg">BG 8</option>
+            <option value="bg/bg9.jpg">BG 9</option>
+            <option value="bg/bg10.jpg">BG 10</option>
+        </select>
+
+        <div class="popup-row">
+            <input type="checkbox" id="enableBackground" checked />
+            <label for="enableBackground">Aktifkan Background</label>
+        </div>
+
+        <label class="field-label">Volume</label>
+        <div class="popup-row">
+            <span>🔇</span>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="0.7" />
+            <span>🔊</span>
+        </div>
+
+        <button class="btn-connect" id="connectButton">🔗 Hubungkan TikTok Live</button>
+        <button class="btn-close"    id="closeButton">Tutup</button>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════
+    //  WebSocket dengan auto-reconnect
+    // ═══════════════════════════════════════════════
+    let ws = null;
+    let wsReady = false;
+    let reconnectTimer = null;
+    let pendingUsername = null;   // username yang akan di-connect ulang setelah reconnect
+
+    function createWS() {
+        if (ws) { try { ws.close(); } catch(_) {} }
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${proto}//${location.host}/musiklive-ws`);
+
+        ws.onopen = () => {
+            wsReady = true;
+            clearTimeout(reconnectTimer);
+            setStatus('🟢 WebSocket terhubung — masukkan username TikTok di ⚙️');
+            if (pendingUsername) {
+                wsSend({ type: 'connect', username: pendingUsername });
+            }
+        };
+
+        ws.onclose = () => {
+            wsReady = false;
+            setStatus('🔴 Koneksi terputus — mencoba ulang dalam 3 detik...');
+            reconnectTimer = setTimeout(createWS, 3000);
+        };
+
+        ws.onerror = () => {
+            setStatus('❌ Error koneksi WebSocket');
+        };
+
+        ws.onmessage = (event) => {
+            let data;
+            try { data = JSON.parse(event.data); } catch { return; }
+            switch (data.type) {
+                case 'status':         setStatus(data.message); break;
+                case 'floating-photo': showFloatingPhoto(data.profilePictureUrl, data.userName); break;
+                case 'big-photo':      showBigPhoto(data.profilePictureUrl, data.userName); break;
+                case 'play-sound':     enqueueSound(data.sound); break;
+                case 'stop-sound':     stopAll(); break;
+            }
+        };
+    }
+
+    function wsSend(obj) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(obj));
+        }
+    }
+
+    createWS();
+
+    // ═══════════════════════════════════════════════
+    //  Status display
+    // ═══════════════════════════════════════════════
+    function setStatus(msg) {
+        document.getElementById('statusBadge').textContent = msg;
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Audio queue system
+    // ═══════════════════════════════════════════════
+    let soundQueue  = [];
+    let isPlaying   = false;
+    let currentAudio = null;
+    let currentVolume = 0.7;
+    const MAX_QUEUE   = 5;   // maks antrian
+
+    function enqueueSound(url) {
+        if (soundQueue.length >= MAX_QUEUE) return;  // buang jika antrian penuh
+        soundQueue.push(url);
+        updateQueueBadge();
+        if (!isPlaying) playNext();
+    }
+
+    function playNext() {
+        if (soundQueue.length === 0) {
+            isPlaying = false;
+            document.getElementById('nowPlaying').style.display = 'none';
+            document.getElementById('queueBadge').style.display = 'none';
+            return;
+        }
+        isPlaying = true;
+        const url = soundQueue.shift();
+        updateQueueBadge();
+
+        currentAudio = new Audio(url);
+        currentAudio.volume = currentVolume;
+        currentAudio.play().catch(() => {
+            // Autoplay blocked — coba lagi setelah interaksi
+            soundQueue.unshift(url);    // kembalikan ke antrian
+            isPlaying = false;
+            setStatus('⚠️ Klik di mana saja untuk mengaktifkan suara, lalu tunggu request baru');
+        });
+
+        // Label "Now Playing"
+        const label = url.match(/\/(\w+)\.mp3$/)?.[1] || '?';
+        document.getElementById('nowPlayingText').textContent =
+            isNaN(label) ? `🎵 ${label}` : `🎵 Lagu #${label}`;
+        document.getElementById('nowPlaying').style.display = 'flex';
+
+        currentAudio.onended = () => { currentAudio = null; isPlaying = false; playNext(); };
+        currentAudio.onerror = () => { currentAudio = null; isPlaying = false; playNext(); };
+    }
+
+    function stopAll() {
+        soundQueue = [];
+        if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
+        isPlaying = false;
+        document.getElementById('nowPlaying').style.display  = 'none';
+        document.getElementById('queueBadge').style.display  = 'none';
+    }
+
+    function updateQueueBadge() {
+        const badge = document.getElementById('queueBadge');
+        if (soundQueue.length > 0) {
+            document.getElementById('queueCount').textContent = soundQueue.length;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Unlock audio on first user interaction
+    document.addEventListener('click', () => {
+        const unlock = new Audio();
+        unlock.play().catch(() => {});
+        // Resume queue if stuck
+        if (!isPlaying && soundQueue.length > 0) playNext();
+    }, { once: true });
+
+    // ═══════════════════════════════════════════════
+    //  Floating photo
+    // ═══════════════════════════════════════════════
+    function showFloatingPhoto(url, name) {
+        if (!url) return;
+        const img = document.createElement('img');
+        img.src   = url;
+        img.alt   = name || '';
+        img.className = 'floating-photo';
+        img.style.left = Math.random() * (window.innerWidth  - 60) + 'px';
+        img.style.top  = Math.random() * (window.innerHeight - 60) + 'px';
+        document.body.appendChild(img);
+
+        const iv = setInterval(() => {
+            img.style.left = Math.random() * (window.innerWidth  - 60) + 'px';
+            img.style.top  = Math.random() * (window.innerHeight - 60) + 'px';
+        }, 600);
+
+        setTimeout(() => {
+            clearInterval(iv);
+            img.style.opacity = '0';
+            setTimeout(() => img.remove(), 900);
+        }, 5000);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Big photo (gift)
+    // ═══════════════════════════════════════════════
+    function showBigPhoto(url, name) {
+        if (!url) return;
+        const img = document.createElement('img');
+        img.src   = url;
+        img.alt   = name || '';
+        img.className = 'big-photo';
+        document.body.appendChild(img);
+        setTimeout(() => {
+            img.style.transition = 'opacity 0.8s';
+            img.style.opacity    = '0';
+            setTimeout(() => img.remove(), 900);
+        }, 4500);
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Volume control
+    // ═══════════════════════════════════════════════
+    document.getElementById('volumeControl').addEventListener('input', (e) => {
+        currentVolume = parseFloat(e.target.value);
+        if (currentAudio) currentAudio.volume = currentVolume;
+    });
+
+    // ═══════════════════════════════════════════════
+    //  Settings popup
+    // ═══════════════════════════════════════════════
+    document.getElementById('settingsButton').addEventListener('click', openPopup);
+    document.getElementById('closeButton').addEventListener('click', closePopup);
+    document.getElementById('overlay').addEventListener('click', closePopup);
+
+    function openPopup()  {
+        document.getElementById('settingsPopup').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+    }
+    function closePopup() {
+        document.getElementById('settingsPopup').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+    }
+
+    document.getElementById('connectButton').addEventListener('click', () => {
+        const username = document.getElementById('usernameInput').value.trim().replace(/^@/, '');
+        if (!username) { alert('Masukkan username TikTok terlebih dahulu!'); return; }
+        pendingUsername = username;
+        if (wsReady) {
+            wsSend({ type: 'connect', username });
+            setStatus(`⏳ Menghubungkan ke @${username}...`);
+        } else {
+            setStatus(`⏳ Menunggu koneksi server, lalu akan terhubung ke @${username}...`);
+        }
+        closePopup();
+    });
+
+    // ═══════════════════════════════════════════════
+    //  Background
+    // ═══════════════════════════════════════════════
+    function applyBg() {
+        const enabled = document.getElementById('enableBackground').checked;
+        const val     = document.getElementById('backgroundSelect').value;
+        document.body.style.backgroundImage = enabled ? `url('${val}')` : 'none';
+        document.body.style.backgroundColor = enabled ? '#0a0a0a' : '#0a0a0a';
+    }
+
+    document.getElementById('enableBackground').addEventListener('change', applyBg);
+    document.getElementById('backgroundSelect').addEventListener('change', applyBg);
+    applyBg(); // apply on load
+    </script>
+</body>
+</html>
