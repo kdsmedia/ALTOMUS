@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrintOK — TikTok Printer Game</title>
+
+  <link rel="stylesheet" href="assets/css/reset.css?v=1.0" />
+  <link rel="stylesheet" href="assets/css/style.css?v=1.0" />
+
+  <script src="assets/js/words.js"></script>
+  <script src="assets/js/msg.js"></script>
+  <script src="assets/js/speakClient.js"></script>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- Socket.IO client served by our server at custom path -->
+  <script src="/printok/socket.io/socket.io.js"></script>
+
+  <script src="assets/js/connection.js"></script>
+
+  <style>
+    /* Toggle Button */
+    .menu-btn {
+      position: fixed !important;
+      top: 20px !important;
+      left: 20px !important;
+      z-index: 9999 !important;
+      background-color: #FE2C55;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      font-size: 22px;
+      cursor: pointer;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 12px rgba(254,44,85,0.4);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .menu-btn:hover { transform: scale(1.1); background-color: #e0002e; }
+
+    /* Sidebar */
+    .info {
+      position: fixed;
+      top: 0; left: 0;
+      width: 300px; height: 100vh;
+      background: #111;
+      color: #fff;
+      padding: 20px 16px;
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 10000;
+      box-sizing: border-box;
+    }
+    .info.show { transform: translateX(0); }
+    .close-btn {
+      font-size: 22px; cursor: pointer; color: #aaa;
+      position: absolute; top: 12px; right: 16px;
+      line-height: 1;
+    }
+    .close-btn:hover { color: #fff; }
+
+    /* Status badge */
+    #stateText       { font-size: 0.85rem; padding: 2px 6px; border-radius: 6px; }
+    #stateText.ok    { color: #4ade80; font-weight: bold; }
+    #stateText.err   { color: #f87171; font-weight: bold; }
+
+    /* Live target display */
+    #usernameTarget {
+      display: inline-block;
+      color: #FE2C55;
+      font-weight: 700;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+
+    /* Section labels */
+    .section-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #666;
+      margin: 14px 0 6px;
+    }
+
+    /* Info table */
+    .info-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .info-table td { padding: 3px 4px; vertical-align: top; }
+    .info-table td:first-child { color: #888; white-space: nowrap; }
+
+    /* Buttons */
+    .btn {
+      display: block; width: 100%;
+      padding: 10px;
+      border: none; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      text-align: center;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #FE2C55; color: #fff; }
+    .btn-primary:hover { background: #d9003f; }
+    .btn-secondary { background: #222; color: #fff; border: 1px solid #333; }
+    .btn-secondary:hover { background: #333; }
+    .btn-sm {
+      display: inline-block; width: auto;
+      padding: 6px 14px;
+      background: #1d4ed8; color: #fff;
+      border: none; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-sm:hover { background: #1e40af; }
+
+    /* Checkboxes */
+    .check-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 0; font-size: 0.82rem; color: #ccc;
+    }
+    .check-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+
+    /* Input fields */
+    .txt-input {
+      width: 100%; padding: 8px 10px;
+      background: #1a1a1a; border: 1px solid #333;
+      color: #fff; border-radius: 6px;
+      font-size: 0.82rem; box-sizing: border-box;
+      outline: none; transition: border-color 0.2s;
+    }
+    .txt-input:focus { border-color: #FE2C55; }
+
+    /* Connect row */
+    .connect-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .connect-row .txt-input { flex: 1; min-width: 0; }
+
+    /* Audio elements */
+    audio { display: none; }
+
+    /* Sidebar overlay */
+    #sidebarOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 9998;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hamburger toggle -->
+  <button id="menuToggle" class="menu-btn" aria-label="Toggle Menu">☰</button>
+
+  <!-- Sidebar overlay backdrop -->
+  <div id="sidebarOverlay"></div>
+
+  <div class="main">
+    <!-- Sidebar Panel -->
+    <div class="info" id="infoPanel">
+      <span id="menuClose" class="close-btn">&times;</span>
+
+      <!-- Branding -->
+      <div style="margin-top:2.5rem; margin-bottom:12px;">
+        <div style="font-size:1.3rem; font-weight:900; color:#FE2C55;">PrintOK</div>
+        <div style="font-size:0.72rem; color:#666; margin-top:2px;">TikTok Printer Live Game</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="section-label">Info</div>
+      <table class="info-table">
+        <tr><td>Canvas</td><td><span id="gameSize">&infin;</span></td></tr>
+        <tr><td>Status</td><td><span id="stateText">Tidak Terhubung</span></td></tr>
+        <tr><td>Timeout</td><td><span id="gameTimeout">&infin;</span></td></tr>
+        <tr><td>Sisa Kata</td><td><span id="gameWords">&infin;</span></td></tr>
+        <tr><td>Target</td><td><span id="usernameTarget">—</span></td></tr>
+      </table>
+
+      <!-- Start game -->
+      <div class="section-label">Game</div>
+      <button id="btnPrepare" class="btn btn-primary" style="margin-bottom:8px;">▶ MULAI GAME</button>
+
+      <!-- Display settings -->
+      <div class="section-label">Tampilan</div>
+      <div class="check-row"><input id="confComment" type="checkbox" checked/><span>Komentar</span></div>
+      <div class="check-row"><input id="confLike"    type="checkbox" checked/><span>Like</span></div>
+      <div class="check-row"><input id="confShare"   type="checkbox" checked/><span>Share &amp; Follow</span></div>
+      <div class="check-row"><input id="confJoin"    type="checkbox"/><span>User Bergabung</span></div>
+      <button id="btnSave" class="btn btn-secondary" style="margin-top:10px; margin-bottom:2px;">Simpan Pengaturan</button>
+
+      <!-- TikTok connect -->
+      <div class="section-label">Live TikTok</div>
+      <div class="connect-row">
+        <input id="targetUsername" class="txt-input" type="text" placeholder="@username" />
+        <button id="targetConnect" class="btn-sm">Hubungkan</button>
+      </div>
+
+      <!-- Sounds (hidden) -->
+      <audio id="sfx1"><source src="assets/sounds/printer_comment.mp3" type="audio/mpeg"/></audio>
+      <audio id="sfx2"><source src="assets/sounds/printer_gift.mp3"    type="audio/mpeg"/></audio>
+      <audio id="sfx3"><source src="assets/sounds/printer_winner.mp3"  type="audio/mpeg"/></audio>
+      <audio id="sfx4"><source src="assets/sounds/yey.mp3"             type="audio/mpeg"/></audio>
+      <audio id="tts"></audio>
+    </div>
+
+    <!-- Game Container -->
+    <div class="container">
+      <video class="background" autoplay muted loop></video>
+
+      <div class="printer">
+        <table class="table">
+          <tr>
+            <td id="paperContainer">
+              <div id="paper" class="paper"></div>
+            </td>
+          </tr>
+          <tr class="bottom-container">
+            <td class="bottom-wrapper">
+              <div class="bottom-bar">
+                <div class="bottom-content">
+                  <div id="textGuess" class="text-guess blink">***</div>
+                  <div class="text-caption">💬 Ketik <span class="text-bold">jawabannya</span> di komentar</div>
+                  <div class="text-caption" style="margin-bottom:0">🙋 Tebak kata &amp; fotomu akan tercetak!</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game logic loaded LAST so DOM & deps are ready -->
+  <script src="assets/js/app.js"></script>
+
+  <script>
+    // ── Sidebar toggle ──────────────────────────────────────────────
+    const infoPanel      = document.getElementById('infoPanel');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function openSidebar() {
+      infoPanel.classList.add('show');
+      sidebarOverlay.style.display = 'block';
+    }
+    function closeSidebar() {
+      infoPanel.classList.remove('show');
+      sidebarOverlay.style.display = 'none';
+    }
+
+    document.getElementById('menuToggle').addEventListener('click', openSidebar);
+    document.getElementById('menuClose').addEventListener('click', closeSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // ── Printer background image ────────────────────────────────────
+    document.querySelector('.printer').style.backgroundImage =
+      "url('assets/media/printer.png')";
+  </script>
+</body>
+</html>
